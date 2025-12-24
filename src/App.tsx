@@ -12,6 +12,7 @@ import { RouteTracker } from "@/components/RouteTracker";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { RetryProvider } from "@/contexts/RetryContext";
+import { CreditModalProvider } from "@/contexts/CreditModalContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -49,6 +50,7 @@ const App = () => (
       <ThemeProvider defaultTheme="dark" storageKey="xpex-theme">
         <AuthProvider>
           <RetryProvider>
+            <CreditModalProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
@@ -96,9 +98,10 @@ const App = () => (
                 </Routes>
                 <APIAssistant />
                 <CookieConsent />
-                <OnboardingTour />
+              <OnboardingTour />
               </BrowserRouter>
             </TooltipProvider>
+            </CreditModalProvider>
           </RetryProvider>
         </AuthProvider>
       </ThemeProvider>

@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.get-invoices]
 verify_jwt = false
+
+[functions.send-credit-alert]
+verify_jwt = false

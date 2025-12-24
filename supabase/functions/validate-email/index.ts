@@ -156,9 +156,68 @@ async function deductCredits(userId: string, amount: number = 1): Promise<{ succ
       description: 'Email validation API call',
       balance_after: newCredits
     });
+
+    // Check thresholds and send alerts
+    await checkCreditThresholds(userId, newCredits);
   }
 
   return { success: newCredits >= 0, remainingCredits: newCredits ?? 0 };
+}
+
+async function checkCreditThresholds(userId: string, currentCredits: number): Promise<void> {
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  
+  // Get user's max credits (approximate based on tier)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_tier')
+    .eq('user_id', userId)
+    .single();
+
+  const tierLimits: Record<string, number> = {
+    free: 100,
+    starter: 1000,
+    growth: 5000,
+    scale: 15000,
+    enterprise: 50000,
+  };
+
+  const maxCredits = tierLimits[profile?.subscription_tier ?? 'free'] || 1000;
+  const percentRemaining = Math.round((currentCredits / maxCredits) * 100);
+
+  // Thresholds to alert at
+  const thresholds = [10, 5, 0];
+  
+  for (const threshold of thresholds) {
+    if (percentRemaining <= threshold) {
+      // Check if we already sent this alert recently (within 24 hours)
+      const { data: recentNotification } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', userId)
+        .ilike('title', `%${threshold}%`)
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .limit(1);
+
+      if (!recentNotification || recentNotification.length === 0) {
+        // Send alert via edge function
+        try {
+          await supabase.functions.invoke('send-credit-alert', {
+            body: {
+              userId,
+              currentCredits,
+              thresholdPercent: threshold,
+              maxCredits,
+            },
+          });
+          console.log(`[VALIDATE-EMAIL] Credit alert sent for threshold ${threshold}%`);
+        } catch (alertError) {
+          console.error('[VALIDATE-EMAIL] Failed to send credit alert:', alertError);
+        }
+      }
+      break; // Only send one alert (the lowest threshold reached)
+    }
+  }
 }
 
 async function logUsage(userId: string, apiKeyId: string, endpoint: string, statusCode: number, responseTimeMs: number) {
