@@ -2,3 +2,6 @@ project_id = "ykunuwzqlwrskosyyrzm"
 
 [functions.send-retention-webhook]
 verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
