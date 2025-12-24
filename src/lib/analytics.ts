@@ -584,6 +584,10 @@ class Analytics {
       window.mixpanel.people.set_once({
         $created: new Date().toISOString(),
         first_seen: new Date().toISOString(),
+        signup_source: document.referrer || 'direct',
+        initial_utm_source: new URLSearchParams(window.location.search).get('utm_source') || undefined,
+        initial_utm_medium: new URLSearchParams(window.location.search).get('utm_medium') || undefined,
+        initial_utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign') || undefined,
       });
 
       window.mixpanel.register({
@@ -599,6 +603,109 @@ class Analytics {
       window.gtag('set', 'user_properties', {
         email: email,
         ...properties,
+      });
+    }
+  }
+
+  // Enhanced user profile update with detailed properties
+  updateUserProfile(properties: {
+    full_name?: string;
+    subscription_tier?: string;
+    credits?: number;
+    referral_code?: string;
+    api_keys_count?: number;
+    total_validations?: number;
+    avatar_url?: string;
+  }) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      const profileData: Record<string, any> = {
+        $last_seen: new Date().toISOString(),
+      };
+
+      if (properties.full_name) profileData.$name = properties.full_name;
+      if (properties.subscription_tier) profileData.subscription_tier = properties.subscription_tier;
+      if (properties.credits !== undefined) profileData.credits_balance = properties.credits;
+      if (properties.referral_code) profileData.referral_code = properties.referral_code;
+      if (properties.api_keys_count !== undefined) profileData.api_keys_count = properties.api_keys_count;
+      if (properties.total_validations !== undefined) profileData.total_validations = properties.total_validations;
+      if (properties.avatar_url) profileData.$avatar = properties.avatar_url;
+
+      window.mixpanel.people.set(profileData);
+      console.log('[Analytics] User profile updated:', profileData);
+    }
+  }
+
+  // Track user tier/segment changes
+  updateUserSegment(segment: 'free' | 'starter' | 'pro' | 'enterprise', previousSegment?: string) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.people.set({
+        user_segment: segment,
+        segment_updated_at: new Date().toISOString(),
+      });
+
+      if (previousSegment && previousSegment !== segment) {
+        window.mixpanel.track('Segment Changed', {
+          from_segment: previousSegment,
+          to_segment: segment,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      window.mixpanel.register({ user_segment: segment });
+    }
+  }
+
+  // Track user engagement score
+  updateEngagementScore(score: number, factors: {
+    logins_last_30_days?: number;
+    api_calls_last_30_days?: number;
+    features_used?: string[];
+  }) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.people.set({
+        engagement_score: score,
+        engagement_updated_at: new Date().toISOString(),
+        ...factors,
+      });
+    }
+  }
+
+  // Track lifecycle stage
+  updateLifecycleStage(stage: 'new' | 'activated' | 'engaged' | 'power_user' | 'at_risk' | 'churned') {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.people.set({
+        lifecycle_stage: stage,
+        lifecycle_updated_at: new Date().toISOString(),
+      });
+      window.mixpanel.register({ lifecycle_stage: stage });
+    }
+  }
+
+  // Increment user activity counters
+  incrementUserActivity(activity: 'api_calls' | 'validations' | 'logins' | 'page_views', count = 1) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.people.increment(`total_${activity}`, count);
+      window.mixpanel.people.set({
+        [`last_${activity}_at`]: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Set user preferences
+  setUserPreferences(preferences: {
+    theme?: 'light' | 'dark' | 'system';
+    language?: string;
+    timezone?: string;
+    email_notifications?: boolean;
+    push_notifications?: boolean;
+  }) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.people.set({
+        preferences_theme: preferences.theme,
+        preferences_language: preferences.language,
+        preferences_timezone: preferences.timezone,
+        preferences_email_notifications: preferences.email_notifications,
+        preferences_push_notifications: preferences.push_notifications,
       });
     }
   }

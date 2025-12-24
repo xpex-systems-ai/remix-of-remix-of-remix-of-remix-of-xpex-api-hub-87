@@ -19,6 +19,66 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch and sync user profile with analytics
+  const syncUserProfile = async (userId: string, email?: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profile) {
+        // Update Mixpanel with detailed profile data
+        analytics.updateUserProfile({
+          full_name: profile.full_name || undefined,
+          subscription_tier: profile.subscription_tier || 'free',
+          credits: profile.credits,
+          referral_code: profile.referral_code || undefined,
+          avatar_url: profile.avatar_url || undefined,
+        });
+
+        // Update segment based on subscription tier
+        const segment = (profile.subscription_tier as 'free' | 'starter' | 'pro' | 'enterprise') || 'free';
+        analytics.updateUserSegment(segment);
+
+        // Increment login counter
+        analytics.incrementUserActivity('logins');
+      }
+
+      // Fetch API keys count
+      const { count: apiKeysCount } = await supabase
+        .from('api_keys')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (apiKeysCount !== null) {
+        analytics.updateUserProfile({ api_keys_count: apiKeysCount });
+      }
+
+      // Fetch total validations count
+      const { count: validationsCount } = await supabase
+        .from('usage_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .ilike('endpoint', '%validate-email%');
+
+      if (validationsCount !== null) {
+        analytics.updateUserProfile({ total_validations: validationsCount });
+        
+        // Determine lifecycle stage based on activity
+        let stage: 'new' | 'activated' | 'engaged' | 'power_user' = 'new';
+        if (validationsCount >= 1000) stage = 'power_user';
+        else if (validationsCount >= 100) stage = 'engaged';
+        else if (validationsCount >= 1) stage = 'activated';
+        
+        analytics.updateLifecycleStage(stage);
+      }
+    } catch (error) {
+      console.error('[Analytics] Failed to sync user profile:', error);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -38,6 +98,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 full_name: session.user.user_metadata?.full_name,
               }
             );
+            
+            // Sync full profile data with analytics
+            syncUserProfile(session.user.id, session.user.email);
             
             if (event === 'SIGNED_IN') {
               analytics.trackLoginCompleted(session.user.app_metadata?.provider || 'email');
@@ -65,6 +128,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             full_name: session.user.user_metadata?.full_name,
           }
         );
+        
+        // Sync full profile data with analytics
+        syncUserProfile(session.user.id, session.user.email);
       }
     });
 
