@@ -176,6 +176,39 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           created_at: string
@@ -672,6 +705,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: number
+      }
       check_achievements: {
         Args: { p_user_id: string }
         Returns: {
@@ -690,6 +727,10 @@ export type Database = {
       complete_referral: {
         Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: boolean
+      }
+      deduct_credits: {
+        Args: { p_amount?: number; p_user_id: string }
+        Returns: number
       }
       get_validation_stats: { Args: never; Returns: Json }
       has_role: {
