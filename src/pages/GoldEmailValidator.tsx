@@ -371,8 +371,8 @@ print(result)`
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Pricing starts at <span className="text-primary font-semibold">$0.001 per validation</span>. 
-            Flexible plans and pay-as-you-go available.
+            Pricing starts at <span className="text-primary font-semibold">$0.00149 per validation</span>. 
+            Get 2,000 credits for just $5, or scale up to 100,000 credits for $149.
           </p>
           <div className="flex justify-center gap-4 flex-wrap">
             <Button 

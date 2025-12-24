@@ -92,7 +92,7 @@ const domainTypos: Record<string, string> = {
   'yahho.com': 'yahoo.com',
 };
 
-async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?: string; keyId?: string }> {
+async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?: string; keyId?: string; credits?: number }> {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   
   const { data, error } = await supabase
@@ -109,7 +109,52 @@ async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?
     return { valid: false };
   }
 
-  return { valid: true, userId: data.user_id, keyId: data.id };
+  // Get user credits
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('credits')
+    .eq('user_id', data.user_id)
+    .single();
+
+  return { valid: true, userId: data.user_id, keyId: data.id, credits: profile?.credits ?? 0 };
+}
+
+async function deductCredits(userId: string, amount: number = 1): Promise<{ success: boolean; remainingCredits: number }> {
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  
+  // Deduct credits atomically
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ credits: supabase.rpc('', {}) }) // We'll use raw SQL approach
+    .eq('user_id', userId)
+    .select('credits')
+    .single();
+
+  // Use RPC or direct update with returning
+  const { data: profile, error: updateError } = await supabase.rpc('deduct_credits', { 
+    p_user_id: userId, 
+    p_amount: amount 
+  });
+
+  if (updateError) {
+    // Fallback: direct update
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('user_id', userId)
+      .single();
+    
+    const newCredits = Math.max((currentProfile?.credits ?? 0) - amount, 0);
+    
+    await supabase
+      .from('profiles')
+      .update({ credits: newCredits })
+      .eq('user_id', userId);
+    
+    return { success: true, remainingCredits: newCredits };
+  }
+
+  return { success: true, remainingCredits: profile ?? 0 };
 }
 
 async function logUsage(userId: string, apiKeyId: string, endpoint: string, statusCode: number, responseTimeMs: number) {
@@ -230,6 +275,20 @@ serve(async (req) => {
       });
     }
 
+    // Check if user has enough credits
+    if ((keyValidation.credits ?? 0) < 1) {
+      return new Response(JSON.stringify({
+        ok: false,
+        error: 'Insufficient credits. Please purchase more credits.',
+        code: 'INSUFFICIENT_CREDITS',
+        credits_required: 1,
+        credits_available: keyValidation.credits ?? 0
+      }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Parse request body
     const { email } = await req.json();
     
@@ -264,6 +323,9 @@ serve(async (req) => {
       mxValid
     });
 
+    // Deduct credits
+    const creditResult = await deductCredits(keyValidation.userId!, 1);
+
     const result = {
       ok: true,
       data: {
@@ -280,6 +342,7 @@ serve(async (req) => {
         risk_level: score >= 80 ? 'low' : score >= 50 ? 'medium' : 'high'
       },
       credits_used: 1,
+      remaining_credits: creditResult.remainingCredits,
       response_time_ms: Date.now() - startTime,
       rate_limit: {
         remaining: keyRateLimit.remaining,

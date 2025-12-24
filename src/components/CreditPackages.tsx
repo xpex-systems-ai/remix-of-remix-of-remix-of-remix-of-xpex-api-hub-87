@@ -8,31 +8,31 @@ import { useNavigate } from "react-router-dom";
 
 const packages = [
   {
-    id: "1k",
-    name: "Pacote Starter",
-    credits: "1.000",
-    price: "$9.99",
-    pricePerCall: "$0.01",
+    id: "starter",
+    name: "Starter Pack",
+    credits: "2,000",
+    price: "$5",
+    pricePerCall: "$0.0025",
     icon: Coins,
     popular: false,
   },
   {
-    id: "10k",
-    name: "Pacote Growth",
-    credits: "10.000",
-    price: "$69.99",
-    pricePerCall: "$0.007",
-    savings: "30% economia",
+    id: "growth",
+    name: "Growth Pack",
+    credits: "20,000",
+    price: "$39",
+    pricePerCall: "$0.00195",
+    savings: "22% savings",
     icon: Zap,
     popular: true,
   },
   {
-    id: "100k",
-    name: "Pacote Scale",
-    credits: "100.000",
-    price: "$499.99",
-    pricePerCall: "$0.005",
-    savings: "50% economia",
+    id: "scale",
+    name: "Scale Pack",
+    credits: "100,000",
+    price: "$149",
+    pricePerCall: "$0.00149",
+    savings: "40% savings",
     icon: Crown,
     popular: false,
   },
@@ -74,14 +74,14 @@ const CreditPackages = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-4">
             <Sparkles className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium text-accent">Pague Conforme Usa</span>
+            <span className="text-sm font-medium text-accent">Pay As You Go</span>
           </div>
           <h3 className="text-2xl md:text-3xl font-bold mb-3">
-            <span className="text-foreground">Pacotes de</span>{" "}
-            <span className="text-gradient">Créditos</span>
+            <span className="text-foreground">Credit</span>{" "}
+            <span className="text-gradient">Packages</span>
           </h3>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Precisa de mais flexibilidade? Compre créditos e use quando quiser. Sem expiração.
+            Need more flexibility? Buy credits and use them anytime. Never expires.
           </p>
         </div>
 
@@ -135,7 +135,7 @@ const CreditPackages = () => {
                 onClick={() => handlePurchase(pkg.id)}
                 disabled={loading === pkg.id}
               >
-                {loading === pkg.id ? "Processando..." : "Comprar Agora"}
+                {loading === pkg.id ? "Processing..." : "Buy Now"}
               </Button>
             </div>
           ))}

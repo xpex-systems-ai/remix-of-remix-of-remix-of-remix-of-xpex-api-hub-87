@@ -60,9 +60,9 @@ const plans = [
 ];
 
 const creditPackages = [
-  { credits: "1,000", price: "$9", perCall: "$0.009" },
-  { credits: "10,000", price: "$79", perCall: "$0.0079" },
-  { credits: "100,000", price: "$699", perCall: "$0.00699" },
+  { credits: "2,000", price: "$5", perCall: "$0.0025" },
+  { credits: "20,000", price: "$39", perCall: "$0.00195" },
+  { credits: "100,000", price: "$149", perCall: "$0.00149" },
 ];
 
 const Pricing = () => {

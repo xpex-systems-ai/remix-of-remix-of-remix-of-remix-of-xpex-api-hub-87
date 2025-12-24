@@ -12,11 +12,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[PURCHASE-CREDITS] ${step}${detailsStr}`);
 };
 
-// Credit package price IDs
-const CREDIT_PRICES = {
-  "1k": "price_1Sdj4zHDcsx7lyoo2Lgoo2pI",
-  "10k": "price_1Sdj6HHDcsx7lyoo3UlicrrD",
-  "100k": "price_1Sdj7IHDcsx7lyoo1ZqzErlX",
+// Credit package price IDs - aligned with manifest pricing
+const CREDIT_PRICES: Record<string, { priceId: string; credits: number }> = {
+  "starter": { priceId: "price_1Sdj4zHDcsx7lyoo2Lgoo2pI", credits: 2000 },    // $5 for 2,000 credits
+  "growth": { priceId: "price_1Sdj6HHDcsx7lyoo3UlicrrD", credits: 20000 },    // $39 for 20,000 credits
+  "scale": { priceId: "price_1Sdj7IHDcsx7lyoo1ZqzErlX", credits: 100000 },    // $149 for 100,000 credits
 };
 
 serve(async (req) => {
@@ -40,10 +40,10 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const { package: creditPackage } = await req.json();
-    if (!creditPackage || !CREDIT_PRICES[creditPackage as keyof typeof CREDIT_PRICES]) {
-      throw new Error("Invalid credit package. Choose: 1k, 10k, or 100k");
+    if (!creditPackage || !CREDIT_PRICES[creditPackage]) {
+      throw new Error("Invalid credit package. Choose: starter, growth, or scale");
     }
-    logStep("Credit package selected", { package: creditPackage });
+    logStep("Credit package selected", { package: creditPackage, credits: CREDIT_PRICES[creditPackage].credits });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
@@ -57,7 +57,8 @@ serve(async (req) => {
     }
     logStep("Customer lookup", { customerId: customerId || "new customer" });
 
-    const priceId = CREDIT_PRICES[creditPackage as keyof typeof CREDIT_PRICES];
+    const packageInfo = CREDIT_PRICES[creditPackage];
+    const priceId = packageInfo.priceId;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -74,6 +75,7 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         package: creditPackage,
+        credits: packageInfo.credits.toString(),
       },
     });
 
