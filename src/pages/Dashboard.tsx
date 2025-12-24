@@ -22,6 +22,7 @@ import { PushNotificationSettings } from "@/components/admin/PushNotificationSet
 import { ExportReports } from "@/components/admin/ExportReports";
 import { APIPlayground } from "@/components/admin/APIPlayground";
 import { BillingCenter } from "@/components/admin/BillingCenter";
+import { CreditsWidget } from "@/components/admin/CreditsWidget";
 import { AuditLogsPanel } from "@/components/admin/AuditLogsPanel";
 import { RateLimitMonitor } from "@/components/admin/RateLimitMonitor";
 import { NotificationPreferences } from "@/components/admin/NotificationPreferences";
@@ -163,6 +164,7 @@ const Dashboard = () => {
               <RealtimeUsageChart />
             </div>
             <div className="space-y-6">
+              <CreditsWidget />
               <SubscriptionCard />
               <RateLimitingCard />
             </div>

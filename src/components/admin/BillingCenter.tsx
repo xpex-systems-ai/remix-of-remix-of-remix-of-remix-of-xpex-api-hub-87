@@ -56,36 +56,30 @@ export function BillingCenter() {
   const loadInvoices = async () => {
     setLoadingInvoices(true);
     try {
-      // Simulated invoices for demo - in production, create an edge function to fetch real invoices
-      const mockInvoices: Invoice[] = [
-        {
-          id: "inv_demo_1",
-          number: "XPEX-001",
-          amount_due: 2900,
-          amount_paid: 2900,
-          currency: "usd",
-          status: "paid",
-          created: Date.now() / 1000 - 86400 * 30,
-        },
-        {
-          id: "inv_demo_2",
-          number: "XPEX-002",
-          amount_due: 2900,
-          amount_paid: 2900,
-          currency: "usd",
-          status: "paid",
-          created: Date.now() / 1000 - 86400 * 60,
-        },
-      ];
-      
-      setInvoices(mockInvoices);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const { data, error } = await supabase.functions.invoke("get-invoices", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      setInvoices(data?.invoices || []);
       setHasLoadedInvoices(true);
       
-      toast({
-        title: "Faturas carregadas",
-        description: "Para ver faturas reais, acesse o portal de cliente.",
-      });
+      if (data?.invoices?.length === 0) {
+        toast({
+          title: "Nenhuma fatura",
+          description: "Você ainda não possui faturas.",
+        });
+      }
     } catch (error) {
+      console.error("Error loading invoices:", error);
       toast({
         title: "Erro ao carregar faturas",
         description: "Não foi possível carregar o histórico de faturas.",

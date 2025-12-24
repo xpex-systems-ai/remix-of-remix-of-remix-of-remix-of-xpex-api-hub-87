@@ -142,6 +142,16 @@ serve(async (req) => {
               })
               .eq("user_id", profile.user_id);
             
+            // Log the credit transaction
+            await supabaseAdmin.from("credit_transactions").insert({
+              user_id: profile.user_id,
+              amount: creditsToAdd,
+              type: "purchase",
+              description: `Credit package purchase - ${creditsToAdd.toLocaleString()} credits`,
+              balance_after: newCredits,
+              metadata: { price_id: priceId, session_id: session.id }
+            });
+            
             logStep("Credits added", { userId: profile.user_id, added: creditsToAdd, total: newCredits });
           }
         } else if (session.mode === "subscription") {
@@ -159,6 +169,16 @@ serve(async (req) => {
               stripe_customer_id: session.customer as string 
             })
             .eq("user_id", profile.user_id);
+
+          // Log the subscription credit grant
+          await supabaseAdmin.from("credit_transactions").insert({
+            user_id: profile.user_id,
+            amount: credits,
+            type: "subscription",
+            description: `${tier.charAt(0).toUpperCase() + tier.slice(1)} subscription activated`,
+            balance_after: credits,
+            metadata: { product_id: productId, subscription_id: session.subscription }
+          });
 
           // Upsert subscription record
           await supabaseAdmin

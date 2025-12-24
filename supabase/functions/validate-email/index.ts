@@ -122,21 +122,14 @@ async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?
 async function deductCredits(userId: string, amount: number = 1): Promise<{ success: boolean; remainingCredits: number }> {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   
-  // Deduct credits atomically
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ credits: supabase.rpc('', {}) }) // We'll use raw SQL approach
-    .eq('user_id', userId)
-    .select('credits')
-    .single();
-
-  // Use RPC or direct update with returning
-  const { data: profile, error: updateError } = await supabase.rpc('deduct_credits', { 
+  // Use atomic credit deduction function
+  const { data: newCredits, error } = await supabase.rpc('deduct_credits', { 
     p_user_id: userId, 
     p_amount: amount 
   });
 
-  if (updateError) {
+  if (error) {
+    console.error('[VALIDATE-EMAIL] Credit deduction error:', error);
     // Fallback: direct update
     const { data: currentProfile } = await supabase
       .from('profiles')
@@ -144,17 +137,28 @@ async function deductCredits(userId: string, amount: number = 1): Promise<{ succ
       .eq('user_id', userId)
       .single();
     
-    const newCredits = Math.max((currentProfile?.credits ?? 0) - amount, 0);
+    const fallbackCredits = Math.max((currentProfile?.credits ?? 0) - amount, 0);
     
     await supabase
       .from('profiles')
-      .update({ credits: newCredits })
+      .update({ credits: fallbackCredits })
       .eq('user_id', userId);
     
-    return { success: true, remainingCredits: newCredits };
+    return { success: true, remainingCredits: fallbackCredits };
   }
 
-  return { success: true, remainingCredits: profile ?? 0 };
+  // Log the transaction
+  if (newCredits >= 0) {
+    await supabase.from('credit_transactions').insert({
+      user_id: userId,
+      amount: -amount,
+      type: 'deduction',
+      description: 'Email validation API call',
+      balance_after: newCredits
+    });
+  }
+
+  return { success: newCredits >= 0, remainingCredits: newCredits ?? 0 };
 }
 
 async function logUsage(userId: string, apiKeyId: string, endpoint: string, statusCode: number, responseTimeMs: number) {
