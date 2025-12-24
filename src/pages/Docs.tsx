@@ -17,7 +17,7 @@ const openApiSpec = {
     license: { name: "MIT", url: "https://opensource.org/licenses/MIT" },
   },
   servers: [
-    { url: "https://bgfjhietjsrlzscxdutt.supabase.co/functions/v1", description: "Production" },
+    { url: "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1", description: "Production" },
   ],
   paths: {
     "/validate-email": {
@@ -141,14 +141,14 @@ const endpoints = [
 
 const codeExamples = {
   curl: (endpoint: typeof endpoints[0]) => `curl -X ${endpoint.method} \\
-  https://bgfjhietjsrlzscxdutt.supabase.co/functions/v1${endpoint.path} \\
+  https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1${endpoint.path} \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: YOUR_API_KEY"${endpoint.request ? ` \\
   -d '${endpoint.request.replace(/\n/g, "").replace(/  /g, "")}'` : ""}`,
   
   python: (endpoint: typeof endpoints[0]) => `import requests
 
-url = "https://bgfjhietjsrlzscxdutt.supabase.co/functions/v1${endpoint.path}"
+url = "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1${endpoint.path}"
 headers = {
     "Content-Type": "application/json",
     "x-api-key": "YOUR_API_KEY"
@@ -158,7 +158,7 @@ ${endpoint.request ? `payload = ${endpoint.request}
 response = requests.${endpoint.method.toLowerCase()}(url, json=payload, headers=headers)` : `response = requests.${endpoint.method.toLowerCase()}(url, headers=headers)`}
 print(response.json())`,
   
-  javascript: (endpoint: typeof endpoints[0]) => `const response = await fetch("https://bgfjhietjsrlzscxdutt.supabase.co/functions/v1${endpoint.path}", {
+  javascript: (endpoint: typeof endpoints[0]) => `const response = await fetch("https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1${endpoint.path}", {
   method: "${endpoint.method}",
   headers: {
     "Content-Type": "application/json",

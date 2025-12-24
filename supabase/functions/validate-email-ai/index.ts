@@ -60,7 +60,7 @@ const DISPOSABLE_DOMAINS = [
   'yopmail.com', 'trashmail.com', 'maildrop.cc', 'sharklasers.com'
 ];
 
-async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?: string; keyId?: string }> {
+async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?: string; keyId?: string; credits?: number }> {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   
   const { data, error } = await supabase
@@ -79,7 +79,34 @@ async function validateApiKey(apiKey: string): Promise<{ valid: boolean; userId?
     return { valid: false };
   }
 
-  return { valid: true, userId: data.user_id, keyId: data.id };
+  // Get user credits
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('credits')
+    .eq('user_id', data.user_id)
+    .single();
+
+  return { valid: true, userId: data.user_id, keyId: data.id, credits: profile?.credits ?? 0 };
+}
+
+async function deductCredits(userId: string, amount: number = 1): Promise<{ success: boolean; remainingCredits: number }> {
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  
+  // Get current credits and deduct
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('credits')
+    .eq('user_id', userId)
+    .single();
+  
+  const newCredits = Math.max((currentProfile?.credits ?? 0) - amount, 0);
+  
+  await supabase
+    .from('profiles')
+    .update({ credits: newCredits })
+    .eq('user_id', userId);
+  
+  return { success: true, remainingCredits: newCredits };
 }
 
 async function logUsage(userId: string, apiKeyId: string, endpoint: string, statusCode: number, responseTimeMs: number) {
@@ -181,6 +208,20 @@ serve(async (req) => {
         code: 'INVALID_API_KEY'
       }), {
         status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if user has enough credits
+    if ((keyValidation.credits ?? 0) < 1) {
+      return new Response(JSON.stringify({
+        ok: false,
+        error: 'Insufficient credits. Please purchase more credits.',
+        code: 'INSUFFICIENT_CREDITS',
+        credits_required: 1,
+        credits_available: keyValidation.credits ?? 0
+      }), {
+        status: 402,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -291,6 +332,9 @@ Respond ONLY with valid JSON:
 
     const responseTime = Date.now() - startTime;
 
+    // Deduct credits
+    const creditResult = await deductCredits(keyValidation.userId!, 1);
+
     // Log successful usage
     await logUsage(keyValidation.userId!, keyValidation.keyId!, '/validate-email-ai', 200, responseTime);
 
@@ -316,7 +360,7 @@ Respond ONLY with valid JSON:
         ai_powered: true
       },
       credits_used: 1,
-      remaining_credits: 99,
+      remaining_credits: creditResult.remainingCredits,
       rate_limit: {
         remaining: keyRateLimit.remaining,
         reset_at: new Date(keyRateLimit.resetAt).toISOString()
