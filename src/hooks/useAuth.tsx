@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { analytics } from '@/lib/analytics';
@@ -14,13 +14,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to send retention webhooks
+const sendRetentionWebhookRequest = async (
+  eventType: string,
+  userId: string,
+  data: Record<string, unknown>
+) => {
+  try {
+    await supabase.functions.invoke('send-retention-webhook', {
+      body: { event_type: eventType, user_id: userId, data }
+    });
+  } catch (error) {
+    console.error('[RetentionWebhook] Error:', error);
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Track user return based on last visit
-  const trackUserReturnIfApplicable = () => {
+  // Track user return based on last visit and send webhook
+  const trackUserReturnIfApplicable = useCallback((userId: string) => {
     const lastVisit = localStorage.getItem('xpex_last_visit');
     if (lastVisit) {
       const daysSinceLastVisit = Math.floor(
@@ -28,10 +43,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
       if (daysSinceLastVisit > 0) {
         analytics.trackUserReturn(daysSinceLastVisit);
+        
+        // Send webhook for significant returns
+        if (daysSinceLastVisit > 7) {
+          const eventType = daysSinceLastVisit > 30 ? 'user.resurrected' : 'user.reactivated';
+          sendRetentionWebhookRequest(eventType, userId, {
+            days_since_last_visit: daysSinceLastVisit,
+            is_reactivation: daysSinceLastVisit > 7,
+            is_resurrection: daysSinceLastVisit > 30,
+          });
+        }
       }
     }
     localStorage.setItem('xpex_last_visit', new Date().toISOString());
-  };
+  }, []);
 
   // Fetch and sync user profile with analytics + cohort tracking
   const syncUserProfile = async (userId: string, email?: string, isNewSignup = false) => {
@@ -44,19 +69,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (profile) {
         const signupDate = new Date(profile.created_at);
+        const daysSinceSignup = Math.floor((Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24));
         
         // Assign cohort for new users or update days since signup
         if (isNewSignup) {
           analytics.assignCohort(signupDate);
           analytics.trackActivationEvent('account_created');
           
+          // Send activation webhook
+          sendRetentionWebhookRequest('activation.account_created', userId, {
+            activation_step: 'account_created',
+            activation_progress: 20,
+          });
+          
           // Check if profile is completed
           if (profile.full_name) {
             analytics.trackActivationEvent('profile_completed');
+            sendRetentionWebhookRequest('activation.profile_completed', userId, {
+              activation_step: 'profile_completed',
+              activation_progress: 40,
+            });
           }
         } else {
           // Update days since signup for existing users
           analytics.updateDaysSinceSignup(signupDate);
+          
+          // Check for retention milestones and send webhooks
+          const milestones = [1, 3, 7, 14, 30, 60, 90, 180, 365];
+          const hitMilestone = milestones.find(m => daysSinceSignup === m);
+          
+          if (hitMilestone) {
+            const milestoneType = hitMilestone === 1 ? 'day_1' :
+                                 hitMilestone <= 7 ? 'first_week' :
+                                 hitMilestone <= 30 ? 'first_month' :
+                                 hitMilestone <= 90 ? 'first_quarter' : 'long_term';
+            
+            sendRetentionWebhookRequest(`retention.milestone.day_${hitMilestone}`, userId, {
+              milestone_days: hitMilestone,
+              milestone_type: milestoneType,
+              subscription_tier: profile.subscription_tier || 'free',
+            });
+          }
         }
         
         // Track retention event (daily active)
@@ -81,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         analytics.incrementUserActivity('logins');
         
         // Track user return
-        trackUserReturnIfApplicable();
+        trackUserReturnIfApplicable(userId);
       }
 
       // Fetch API keys count and track activation
@@ -93,9 +146,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (apiKeysCount !== null) {
         analytics.updateUserProfile({ api_keys_count: apiKeysCount });
         
-        // Track first API key activation event
-        if (apiKeysCount >= 1) {
+        // Track first API key activation event and send webhook
+        if (apiKeysCount === 1) {
           analytics.trackActivationEvent('first_api_key');
+          sendRetentionWebhookRequest('activation.first_api_key', userId, {
+            activation_step: 'first_api_key',
+            activation_progress: 60,
+          });
         }
       }
 
@@ -109,9 +166,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (validationsCount !== null) {
         analytics.updateUserProfile({ total_validations: validationsCount });
         
-        // Track first validation activation event
-        if (validationsCount >= 1) {
+        // Track first validation activation event and send webhook
+        if (validationsCount === 1) {
           analytics.trackActivationEvent('first_validation');
+          sendRetentionWebhookRequest('activation.first_validation', userId, {
+            activation_step: 'first_validation',
+            activation_progress: 80,
+          });
         }
         
         // Determine lifecycle stage based on activity
@@ -122,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         analytics.updateLifecycleStage(stage);
         
-        // Track churn risk if user has been inactive
+        // Track churn risk if user has been inactive and send webhook
         const lastVisit = localStorage.getItem('xpex_last_visit');
         if (lastVisit) {
           const daysSinceLastVisit = Math.floor(
@@ -130,9 +191,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           );
           if (daysSinceLastVisit > 14) {
             const riskScore = Math.min(100, daysSinceLastVisit * 3);
+            const riskLevel = riskScore >= 80 ? 'critical' :
+                             riskScore >= 60 ? 'high' :
+                             riskScore >= 40 ? 'medium' : 'low';
+            
             analytics.trackChurnRiskSignal('inactivity', riskScore, {
               days_inactive: daysSinceLastVisit,
             });
+            
+            // Send churn risk webhook for medium+ risk
+            if (riskScore >= 40) {
+              sendRetentionWebhookRequest(`churn.risk.${riskLevel}`, userId, {
+                risk_score: riskScore,
+                risk_level: riskLevel,
+                risk_factors: ['inactivity'],
+                days_inactive: daysSinceLastVisit,
+              });
+            }
           }
         }
       }
@@ -144,8 +219,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('user_id', userId)
         .eq('status', 'active');
 
-      if (purchaseCount !== null && purchaseCount >= 1) {
+      if (purchaseCount !== null && purchaseCount === 1) {
         analytics.trackActivationEvent('first_purchase');
+        sendRetentionWebhookRequest('activation.first_purchase', userId, {
+          activation_step: 'first_purchase',
+          activation_progress: 100,
+        });
       }
     } catch (error) {
       console.error('[Analytics] Failed to sync user profile:', error);
