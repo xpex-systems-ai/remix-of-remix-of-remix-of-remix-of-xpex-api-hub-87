@@ -11,6 +11,114 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[AUTO-RECHARGE] ${step}`, details ? JSON.stringify(details) : "");
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClientType = any;
+
+// Send webhook notification for auto-recharge events
+async function sendAutoRechargeWebhook(
+  supabaseAdmin: SupabaseClientType,
+  userId: string,
+  eventType: "auto_recharge.success" | "auto_recharge.failed",
+  payload: Record<string, unknown>
+) {
+  try {
+    // Get webhooks subscribed to auto_recharge events
+    const { data: webhooks } = await supabaseAdmin
+      .from("webhooks")
+      .select("id, url, secret, events")
+      .eq("user_id", userId)
+      .eq("active", true);
+
+    if (!webhooks || webhooks.length === 0) {
+      logStep("No webhooks configured for user", { userId });
+      return;
+    }
+
+    // Filter webhooks subscribed to auto_recharge events
+    const subscribedWebhooks = (webhooks as Array<{ id: string; url: string; secret: string; events: string[] }>).filter((wh) => 
+      wh.events.includes("auto_recharge") || wh.events.includes(eventType)
+    );
+
+    if (subscribedWebhooks.length === 0) {
+      logStep("No webhooks subscribed to auto_recharge events", { userId });
+      return;
+    }
+
+    logStep("Sending webhook notifications", { 
+      userId, 
+      eventType, 
+      webhookCount: subscribedWebhooks.length 
+    });
+
+    // Send webhook to each subscribed endpoint
+    for (const webhook of subscribedWebhooks) {
+      try {
+        const wh = webhook as { id: string; url: string; secret: string; events: string[] };
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const deliveryId = `whd_${Date.now().toString(36)}${crypto.randomUUID().slice(0, 8)}`;
+        
+        const webhookPayload = {
+          id: deliveryId,
+          event: eventType,
+          timestamp: new Date().toISOString(),
+          api_version: "2024-01-01",
+          data: payload,
+        };
+
+        const bodyString = JSON.stringify(webhookPayload);
+        
+        // Generate HMAC signature
+        const encoder = new TextEncoder();
+        const keyData = encoder.encode(wh.secret);
+        const message = encoder.encode(`${timestamp}.${bodyString}`);
+        const cryptoKey = await crypto.subtle.importKey(
+          "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+        );
+        const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, message);
+        const signature = Array.from(new Uint8Array(signatureBuffer))
+          .map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        const response = await fetch(wh.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Webhook-Id": deliveryId,
+            "X-Webhook-Signature": `t=${timestamp},v1=${signature}`,
+            "X-Webhook-Timestamp": timestamp,
+            "X-Webhook-Event": eventType,
+          },
+          body: bodyString,
+        });
+
+        // Log the webhook delivery
+        await supabaseAdmin.from("webhook_logs").insert({
+          webhook_id: wh.id,
+          event_type: eventType,
+          payload: webhookPayload,
+          status_code: response.status,
+          response: await response.text().catch(() => ""),
+          success: response.ok,
+          attempts: 1,
+        });
+
+        logStep("Webhook sent", { 
+          webhookId: wh.id, 
+          status: response.status, 
+          success: response.ok 
+        });
+      } catch (webhookError) {
+        logStep("Failed to send webhook", { 
+          error: webhookError instanceof Error ? webhookError.message : "Unknown" 
+        });
+      }
+    }
+  } catch (error) {
+    logStep("Error sending webhooks", { 
+      error: error instanceof Error ? error.message : "Unknown" 
+    });
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -184,6 +292,19 @@ serve(async (req) => {
         action_url: "/dashboard",
       });
 
+      // Send webhook notification for success
+      await sendAutoRechargeWebhook(supabaseAdmin, userId, "auto_recharge.success", {
+        credits_added: pkg.credits,
+        amount_charged_cents: pkg.price,
+        amount_charged_usd: (pkg.price / 100).toFixed(2),
+        package: settings.recharge_package,
+        new_balance: newCredits || currentCredits + pkg.credits,
+        previous_balance: currentCredits,
+        payment_intent_id: paymentIntent.id,
+        threshold_credits: settings.threshold_credits,
+        recharged_at: new Date().toISOString(),
+      });
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -205,14 +326,14 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     logStep("Error in auto-recharge", { error: errorMessage });
 
-    // If card declined, notify user
+    // If card declined, notify user and send webhook
     if (errorMessage.includes("card_declined") || errorMessage.includes("payment_failed")) {
       try {
         const supabaseAdmin = createClient(
           Deno.env.get("SUPABASE_URL") ?? "",
           Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
         );
-        const { userId } = await req.clone().json();
+        const { userId, currentCredits } = await req.clone().json();
         
         await supabaseAdmin.from("notifications").insert({
           user_id: userId,
@@ -220,6 +341,15 @@ serve(async (req) => {
           message: "Your auto-recharge payment failed. Please update your payment method.",
           type: "error",
           action_url: "/credits",
+        });
+
+        // Send webhook notification for failure
+        await sendAutoRechargeWebhook(supabaseAdmin, userId, "auto_recharge.failed", {
+          error: errorMessage,
+          error_type: errorMessage.includes("card_declined") ? "card_declined" : "payment_failed",
+          current_credits: currentCredits,
+          failed_at: new Date().toISOString(),
+          action_required: "Update payment method",
         });
       } catch {
         // Ignore notification errors

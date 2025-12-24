@@ -48,7 +48,10 @@ export const WEBHOOK_EVENTS = [
   { value: 'credits.depleted', label: 'Créditos esgotados' },
   { value: 'api_key.created', label: 'API Key criada' },
   { value: 'api_key.deleted', label: 'API Key deletada' },
-  { value: 'subscription.changed', label: 'Assinatura alterada' }
+  { value: 'subscription.changed', label: 'Assinatura alterada' },
+  { value: 'auto_recharge', label: 'Auto-recharge (sucesso ou falha)' },
+  { value: 'auto_recharge.success', label: 'Auto-recharge bem-sucedido' },
+  { value: 'auto_recharge.failed', label: 'Auto-recharge falhou' }
 ];
 
 const CACHE_KEY_WEBHOOKS = 'webhooks';
