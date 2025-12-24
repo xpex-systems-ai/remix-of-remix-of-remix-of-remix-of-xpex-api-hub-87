@@ -11,6 +11,10 @@ export interface SubscriptionStatus {
   monthlyCredits: number;
 }
 
+export interface SubscriptionError extends Error {
+  isRetryable: boolean;
+}
+
 // Stripe price IDs
 export const STRIPE_PRICES = {
   pro: 'price_1SdiUmHDcsx7lyooOieP0TLb',
@@ -29,10 +33,13 @@ export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState<Error | null>(null);
   const { user, session } = useAuth();
   const mountedRef = useRef(true);
 
   const checkSubscription = useCallback(async () => {
+    setError(null);
+    
     // Get fresh session to ensure token is not expired
     const { data: { session: freshSession } } = await supabase.auth.getSession();
     
@@ -78,11 +85,12 @@ export const useSubscription = () => {
         setIsRetrying(false);
         setRetryCount(0);
       }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
+    } catch (err) {
+      console.error('Error checking subscription:', err);
       if (mountedRef.current) {
         setIsRetrying(false);
         setRetryCount(0);
+        setError(err instanceof Error ? err : new Error(String(err)));
       }
     } finally {
       if (mountedRef.current) {
@@ -184,6 +192,7 @@ export const useSubscription = () => {
     loading,
     isRetrying,
     retryCount,
+    error,
     checkSubscription,
     startCheckout,
     openCustomerPortal

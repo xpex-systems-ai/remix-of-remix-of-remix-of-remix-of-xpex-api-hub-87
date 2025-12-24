@@ -1,9 +1,10 @@
-import { CreditCard, Crown, Zap, Building2, ExternalLink } from "lucide-react";
+import { CreditCard, Crown, Zap, Building2, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
+import { DashboardSectionWrapper } from "@/components/DashboardSectionWrapper";
 
 export const SubscriptionCard = () => {
-  const { subscription, loading, startCheckout, openCustomerPortal } = useSubscription();
+  const { subscription, loading, isRetrying, retryCount, checkSubscription, startCheckout, openCustomerPortal, error } = useSubscription();
 
   const tierConfig = {
     free: {
@@ -30,68 +31,83 @@ export const SubscriptionCard = () => {
   const Icon = config.icon;
 
   return (
-    <div className="glass-card p-6 rounded-xl border border-border/50">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-primary" />
-          Assinatura
-        </h3>
-        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${config.bgColor}`}>
-          <Icon className={`h-4 w-4 ${config.color}`} />
-          <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
+    <DashboardSectionWrapper
+      loading={loading}
+      error={error}
+      isRetrying={isRetrying}
+      retryCount={retryCount}
+      onRetry={checkSubscription}
+      title="Erro ao carregar assinatura"
+      minHeight="min-h-[220px]"
+    >
+      <div className="glass-card p-6 rounded-xl border border-border/50">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
+            Assinatura
+          </h3>
+          <div className="flex items-center gap-2">
+            {isRetrying && (
+              <RefreshCw className="h-4 w-4 text-amber-500 animate-spin" />
+            )}
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${config.bgColor}`}>
+              <Icon className={`h-4 w-4 ${config.color}`} />
+              <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center py-2 border-b border-border/30">
-          <span className="text-muted-foreground text-sm">Créditos Mensais</span>
-          <span className="font-mono text-foreground">
-            {subscription.monthlyCredits === -1 ? '∞' : subscription.monthlyCredits.toLocaleString()}
-          </span>
-        </div>
-
-        {subscription.subscriptionEnd && (
+        <div className="space-y-4">
           <div className="flex justify-between items-center py-2 border-b border-border/30">
-            <span className="text-muted-foreground text-sm">Renova em</span>
+            <span className="text-muted-foreground text-sm">Créditos Mensais</span>
             <span className="font-mono text-foreground">
-              {new Date(subscription.subscriptionEnd).toLocaleDateString('pt-BR')}
+              {subscription.monthlyCredits === -1 ? '∞' : subscription.monthlyCredits.toLocaleString()}
             </span>
           </div>
-        )}
 
-        <div className="flex gap-2 pt-2">
-          {subscription.tier === 'free' ? (
-            <>
-              <Button 
-                variant="cyber" 
-                className="flex-1"
-                onClick={() => startCheckout('pro')}
-                disabled={loading}
-              >
-                Upgrade para Pro
-              </Button>
+          {subscription.subscriptionEnd && (
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-muted-foreground text-sm">Renova em</span>
+              <span className="font-mono text-foreground">
+                {new Date(subscription.subscriptionEnd).toLocaleDateString('pt-BR')}
+              </span>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            {subscription.tier === 'free' ? (
+              <>
+                <Button 
+                  variant="cyber" 
+                  className="flex-1"
+                  onClick={() => startCheckout('pro')}
+                  disabled={loading || isRetrying}
+                >
+                  Upgrade para Pro
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => startCheckout('enterprise')}
+                  disabled={loading || isRetrying}
+                >
+                  Enterprise
+                </Button>
+              </>
+            ) : (
               <Button 
                 variant="outline" 
-                className="flex-1"
-                onClick={() => startCheckout('enterprise')}
-                disabled={loading}
+                className="w-full"
+                onClick={openCustomerPortal}
+                disabled={loading || isRetrying}
               >
-                Enterprise
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Gerenciar Assinatura
               </Button>
-            </>
-          ) : (
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={openCustomerPortal}
-              disabled={loading}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Gerenciar Assinatura
-            </Button>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </DashboardSectionWrapper>
   );
 };
