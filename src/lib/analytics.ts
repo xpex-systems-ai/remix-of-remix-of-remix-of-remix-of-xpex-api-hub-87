@@ -710,6 +710,211 @@ class Analytics {
     }
   }
 
+  // ============== Cohort Analysis Tracking ==============
+
+  // Assign user to a cohort based on signup date (weekly cohorts)
+  assignCohort(signupDate: Date) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      const cohortWeek = this.getWeekCohort(signupDate);
+      const cohortMonth = this.getMonthCohort(signupDate);
+      const cohortQuarter = this.getQuarterCohort(signupDate);
+
+      window.mixpanel.people.set_once({
+        cohort_week: cohortWeek,
+        cohort_month: cohortMonth,
+        cohort_quarter: cohortQuarter,
+        signup_date: signupDate.toISOString(),
+        days_since_signup: 0,
+      });
+
+      window.mixpanel.register({
+        cohort_week: cohortWeek,
+        cohort_month: cohortMonth,
+      });
+
+      console.log('[Analytics] Cohort assigned:', { cohortWeek, cohortMonth, cohortQuarter });
+    }
+  }
+
+  // Track retention event for cohort analysis
+  trackRetentionEvent(eventType: 'daily_active' | 'weekly_active' | 'monthly_active' | 'feature_used', details?: Record<string, any>) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      const now = new Date();
+      
+      window.mixpanel.track('Retention Event', {
+        event_type: eventType,
+        event_date: now.toISOString(),
+        event_day: now.toISOString().split('T')[0],
+        event_week: this.getWeekCohort(now),
+        event_month: this.getMonthCohort(now),
+        ...details,
+      });
+
+      // Update last active timestamps
+      window.mixpanel.people.set({
+        last_active_date: now.toISOString(),
+        last_active_day: now.toISOString().split('T')[0],
+      });
+
+      // Increment activity counters
+      window.mixpanel.people.increment('days_active', 1);
+    }
+  }
+
+  // Track user return after inactivity
+  trackUserReturn(daysSinceLastVisit: number) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.track('User Returned', {
+        days_since_last_visit: daysSinceLastVisit,
+        return_date: new Date().toISOString(),
+        is_reactivation: daysSinceLastVisit > 7,
+        is_resurrection: daysSinceLastVisit > 30,
+      });
+
+      if (daysSinceLastVisit > 30) {
+        window.mixpanel.people.increment('resurrection_count', 1);
+      }
+    }
+  }
+
+  // Track days since signup for retention analysis
+  updateDaysSinceSignup(signupDate: Date) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      const daysSinceSignup = Math.floor((Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24));
+      const weeksSinceSignup = Math.floor(daysSinceSignup / 7);
+      const monthsSinceSignup = Math.floor(daysSinceSignup / 30);
+
+      window.mixpanel.people.set({
+        days_since_signup: daysSinceSignup,
+        weeks_since_signup: weeksSinceSignup,
+        months_since_signup: monthsSinceSignup,
+      });
+
+      // Track retention milestones
+      const milestones = [1, 3, 7, 14, 30, 60, 90, 180, 365];
+      milestones.forEach(milestone => {
+        if (daysSinceSignup === milestone) {
+          window.mixpanel?.track('Retention Milestone', {
+            milestone_days: milestone,
+            milestone_type: this.getMilestoneType(milestone),
+          });
+        }
+      });
+    }
+  }
+
+  // Track conversion funnel stages
+  trackFunnelStage(funnelName: string, stageName: string, stageNumber: number, properties?: Record<string, any>) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.track('Funnel Stage', {
+        funnel_name: funnelName,
+        stage_name: stageName,
+        stage_number: stageNumber,
+        timestamp: new Date().toISOString(),
+        ...properties,
+      });
+
+      // Track specific funnel events for Mixpanel's built-in funnel analysis
+      window.mixpanel.track(`${funnelName} - ${stageName}`, {
+        stage_number: stageNumber,
+        ...properties,
+      });
+    }
+  }
+
+  // Track activation events for new user activation funnel
+  trackActivationEvent(eventName: 'account_created' | 'profile_completed' | 'first_api_key' | 'first_validation' | 'first_purchase', properties?: Record<string, any>) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.track('Activation Event', {
+        activation_step: eventName,
+        timestamp: new Date().toISOString(),
+        ...properties,
+      });
+
+      window.mixpanel.people.set_once({
+        [`${eventName}_at`]: new Date().toISOString(),
+      });
+
+      // Track activation progress
+      const activationSteps = ['account_created', 'profile_completed', 'first_api_key', 'first_validation', 'first_purchase'];
+      const completedSteps = activationSteps.indexOf(eventName) + 1;
+      const activationProgress = Math.round((completedSteps / activationSteps.length) * 100);
+
+      window.mixpanel.people.set({
+        activation_progress: activationProgress,
+        activation_steps_completed: completedSteps,
+      });
+    }
+  }
+
+  // Track user segment transitions
+  trackSegmentTransition(fromSegment: string, toSegment: string, reason?: string) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.track('Segment Transition', {
+        from_segment: fromSegment,
+        to_segment: toSegment,
+        transition_reason: reason,
+        transition_date: new Date().toISOString(),
+      });
+
+      window.mixpanel.people.set({
+        current_segment: toSegment,
+        previous_segment: fromSegment,
+        segment_transition_date: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Track churn risk signals
+  trackChurnRiskSignal(signalType: 'inactivity' | 'reduced_usage' | 'failed_payment' | 'support_ticket' | 'feature_abandonment', riskScore: number, details?: Record<string, any>) {
+    if (typeof window !== 'undefined' && window.mixpanel) {
+      window.mixpanel.track('Churn Risk Signal', {
+        signal_type: signalType,
+        risk_score: riskScore,
+        signal_date: new Date().toISOString(),
+        ...details,
+      });
+
+      window.mixpanel.people.set({
+        churn_risk_score: riskScore,
+        last_churn_signal: signalType,
+        churn_risk_updated_at: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Helper: Get week cohort string (YYYY-WXX format)
+  private getWeekCohort(date: Date): string {
+    const year = date.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+    const week = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+    return `${year}-W${week.toString().padStart(2, '0')}`;
+  }
+
+  // Helper: Get month cohort string (YYYY-MM format)
+  private getMonthCohort(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  // Helper: Get quarter cohort string (YYYY-QX format)
+  private getQuarterCohort(date: Date): string {
+    const year = date.getFullYear();
+    const quarter = Math.ceil((date.getMonth() + 1) / 3);
+    return `${year}-Q${quarter}`;
+  }
+
+  // Helper: Get milestone type description
+  private getMilestoneType(days: number): string {
+    if (days === 1) return 'day_1';
+    if (days <= 7) return 'first_week';
+    if (days <= 30) return 'first_month';
+    if (days <= 90) return 'first_quarter';
+    return 'long_term';
+  }
+
   resetUser() {
     if (typeof window !== 'undefined' && window.mixpanel) {
       window.mixpanel.reset();
