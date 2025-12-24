@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.send-credit-alert]
 verify_jwt = false
+
+[functions.auto-recharge]
+verify_jwt = false
+
+[functions.bulk-validate-email]
+verify_jwt = false

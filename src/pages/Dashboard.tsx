@@ -25,6 +25,8 @@ import { BillingCenter } from "@/components/admin/BillingCenter";
 import { CreditsWidget } from "@/components/admin/CreditsWidget";
 import { CreditTransactionHistory } from "@/components/admin/CreditTransactionHistory";
 import { CreditAlertSettings } from "@/components/admin/CreditAlertSettings";
+import { AutoRechargeSettings } from "@/components/admin/AutoRechargeSettings";
+import { BulkEmailValidator } from "@/components/admin/BulkEmailValidator";
 import { AuditLogsPanel } from "@/components/admin/AuditLogsPanel";
 import { RateLimitMonitor } from "@/components/admin/RateLimitMonitor";
 import { NotificationPreferences } from "@/components/admin/NotificationPreferences";
@@ -259,11 +261,18 @@ const Dashboard = () => {
           </div>
         </PageTransition>
 
-        {/* Credit Alert Settings */}
+        {/* Credit Alert & Auto-Recharge Settings */}
         <PageTransition delay={790}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <CreditAlertSettings />
-            <div />
+            <AutoRechargeSettings />
+          </div>
+        </PageTransition>
+
+        {/* Bulk Email Validator */}
+        <PageTransition delay={795}>
+          <div className="mb-8">
+            <BulkEmailValidator />
           </div>
         </PageTransition>
 

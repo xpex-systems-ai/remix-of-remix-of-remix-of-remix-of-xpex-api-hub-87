@@ -149,6 +149,96 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_recharge_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          last_recharge_at: string | null
+          recharge_amount: number
+          recharge_package: string
+          stripe_payment_method_id: string | null
+          threshold_credits: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_recharge_at?: string | null
+          recharge_amount?: number
+          recharge_package?: string
+          stripe_payment_method_id?: string | null
+          threshold_credits?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_recharge_at?: string | null
+          recharge_amount?: number
+          recharge_package?: string
+          stripe_payment_method_id?: string | null
+          threshold_credits?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bulk_validation_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits_used: number
+          error_message: string | null
+          file_name: string
+          id: string
+          invalid_emails: number
+          processed_emails: number
+          results: Json | null
+          status: string
+          total_emails: number
+          updated_at: string
+          user_id: string
+          valid_emails: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          file_name: string
+          id?: string
+          invalid_emails?: number
+          processed_emails?: number
+          results?: Json | null
+          status?: string
+          total_emails?: number
+          updated_at?: string
+          user_id: string
+          valid_emails?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          file_name?: string
+          id?: string
+          invalid_emails?: number
+          processed_emails?: number
+          results?: Json | null
+          status?: string
+          total_emails?: number
+          updated_at?: string
+          user_id?: string
+          valid_emails?: number
+        }
+        Relationships: []
+      }
       configuration_backups: {
         Row: {
           backup_type: string
