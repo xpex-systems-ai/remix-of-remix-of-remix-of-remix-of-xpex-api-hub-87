@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Brain, TrendingUp, AlertTriangle, Lightbulb, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { Brain, TrendingUp, AlertTriangle, Lightbulb, Loader2, RefreshCw, Sparkles, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { withRetry } from "@/lib/retry";
 
 interface InsightsData {
   insights: string[];
@@ -23,20 +24,45 @@ const usageData = [
 
 export const AIInsights = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState<Error | null>(null);
   const [insights, setInsights] = useState<InsightsData | null>(null);
 
   const fetchInsights = async () => {
     setIsLoading(true);
+    setError(null);
+    setIsRetrying(false);
+    setRetryCount(0);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('ai-insights', {
-        body: { usageData }
-      });
+      const data = await withRetry(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('ai-insights', {
+            body: { usageData }
+          });
+          if (error) throw error;
+          return data;
+        },
+        {
+          maxRetries: 3,
+          initialDelay: 1000,
+          maxDelay: 10000,
+          onRetry: (err, attempt, delay) => {
+            console.log(`[AI Insights] Retry attempt ${attempt} after ${Math.round(delay)}ms:`, err);
+            setIsRetrying(true);
+            setRetryCount(attempt);
+          }
+        }
+      );
 
-      if (error) throw error;
       setInsights(data);
+      setIsRetrying(false);
       toast.success('Insights gerados com IA!');
-    } catch (error) {
-      console.error('Error fetching insights:', error);
+    } catch (err) {
+      console.error('Error fetching insights:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      setIsRetrying(false);
       toast.error('Erro ao gerar insights');
     } finally {
       setIsLoading(false);
@@ -81,7 +107,7 @@ export const AIInsights = () => {
         </Button>
       </div>
 
-      {!insights && !isLoading && (
+      {!insights && !isLoading && !error && (
         <div className="text-center py-8 text-muted-foreground">
           <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30" />
           <p>Clique para gerar insights com IA</p>
@@ -89,10 +115,24 @@ export const AIInsights = () => {
         </div>
       )}
 
+      {error && !isLoading && (
+        <div className="text-center py-8">
+          <WifiOff className="w-10 h-10 mx-auto mb-4 text-destructive/60" />
+          <p className="text-destructive mb-2">Erro ao carregar insights</p>
+          <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
+          <Button variant="outline" size="sm" onClick={fetchInsights}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Tentar novamente
+          </Button>
+        </div>
+      )}
+
       {isLoading && (
         <div className="text-center py-8">
           <Loader2 className="w-10 h-10 mx-auto mb-4 animate-spin text-primary" />
-          <p className="text-muted-foreground">Analisando dados com IA...</p>
+          <p className="text-muted-foreground">
+            {isRetrying ? `Reconectando... (tentativa ${retryCount})` : 'Analisando dados com IA...'}
+          </p>
         </div>
       )}
 
