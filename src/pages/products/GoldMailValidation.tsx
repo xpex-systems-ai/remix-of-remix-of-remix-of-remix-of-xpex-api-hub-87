@@ -10,9 +10,31 @@ import {
   ArrowRight, Copy, Play, Grid3X3, BookOpen, Mail, TrendingUp, Clock,
   Code, Activity, Users, Package, Puzzle, Chrome, Bot, Layers
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+
+// Custom hook for scroll-triggered animations
+const useScrollAnimation = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, isVisible };
+};
 
 // Custom hook for animated counters
 const useCountUp = (end: number, duration: number = 2000, start: number = 0) => {
@@ -268,34 +290,34 @@ const GoldMailValidation = () => {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950" />
-        <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-yellow-500/5 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-yellow-500/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-8">
-            <div className="flex justify-center gap-2 flex-wrap">
-              <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+            <div className="flex justify-center gap-2 flex-wrap animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <Badge className="bg-green-500/20 text-green-400 border border-green-500/30 hover:scale-105 transition-transform cursor-default">
                 <CheckCircle className="w-3 h-3 mr-1" /> Enterprise Ready
               </Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">API-First</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Usage-Based Billing</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Global Infrastructure</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">API-First</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">Usage-Based Billing</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">Global Infrastructure</Badge>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight animate-fade-in" style={{ animationDelay: "200ms" }}>
               <span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
                 GoldMail Validation
               </span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: "300ms" }}>
               Enterprise-grade email validation, risk scoring and delivery intelligence.
             </p>
 
-            <div className="flex justify-center gap-4 flex-wrap pt-4">
+            <div className="flex justify-center gap-4 flex-wrap pt-4 animate-fade-in" style={{ animationDelay: "400ms" }}>
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900 font-semibold gap-2"
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900 font-semibold gap-2 hover:scale-105 transition-transform"
                 onClick={() => scrollToSection("live-test")}
               >
                 <Play className="w-4 h-4" /> Run Live Test
@@ -303,7 +325,7 @@ const GoldMailValidation = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 hover:scale-105 transition-transform"
                 onClick={() => scrollToSection("products")}
               >
                 <Grid3X3 className="w-4 h-4" /> View Products
@@ -456,29 +478,33 @@ const GoldMailValidation = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {productCards.map((product) => (
-              <Card key={product.id} className="p-6 bg-slate-900/50 border-slate-800 hover:border-amber-500/30 transition-all group">
+            {productCards.map((product, index) => (
+              <Card 
+                key={product.id} 
+                className="p-6 bg-slate-900/50 border-slate-800 hover:border-amber-500/30 transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/5 animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
                 <div className="flex items-start justify-between mb-4">
-                  <product.icon className="w-10 h-10 text-amber-400" />
-                  <Badge className={product.badgeColor}>{product.badge}</Badge>
+                  <product.icon className="w-10 h-10 text-amber-400 group-hover:scale-110 transition-transform duration-300" />
+                  <Badge className={`${product.badgeColor} group-hover:scale-105 transition-transform`}>{product.badge}</Badge>
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-slate-100">{product.name}</h3>
+                <h3 className="text-xl font-semibold mb-2 text-slate-100 group-hover:text-amber-400 transition-colors">{product.name}</h3>
                 <p className="text-sm text-slate-400 mb-4">{product.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {product.features.map((feature, i) => (
-                    <Badge key={i} variant="outline" className="border-slate-700 text-slate-500 text-xs">{feature}</Badge>
+                    <Badge key={i} variant="outline" className="border-slate-700 text-slate-500 text-xs hover:border-slate-600 transition-colors">{feature}</Badge>
                   ))}
                 </div>
                 <Button 
                   variant={product.status === "planned" ? "ghost" : "outline"} 
                   size="sm" 
-                  className={product.status === "planned" ? "text-slate-500" : "border-slate-700 text-slate-300 hover:bg-slate-800"}
+                  className={`${product.status === "planned" ? "text-slate-500" : "border-slate-700 text-slate-300 hover:bg-slate-800"} transition-all duration-300 hover:gap-3`}
                   asChild={product.status !== "planned"}
                 >
                   {product.status === "planned" ? (
                     <span>Notify Me</span>
                   ) : (
-                    <Link to={product.route}>View {product.type}</Link>
+                    <Link to={product.route} className="flex items-center gap-2">View {product.type} <ArrowRight className="w-3 h-3" /></Link>
                   )}
                 </Button>
               </Card>
@@ -495,14 +521,22 @@ const GoldMailValidation = () => {
             <p className="text-slate-400">GoldMail operates as a silent intelligence layer, not a UI dependency.</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 relative">
+            {/* Connection lines for desktop */}
+            <div className="hidden md:block absolute top-1/2 left-1/3 w-1/3 h-0.5 bg-gradient-to-r from-amber-500/50 to-amber-500/50 -translate-y-1/2" />
+            <div className="hidden md:block absolute top-1/2 right-1/3 w-1/3 h-0.5 bg-gradient-to-r from-amber-500/50 to-amber-500/50 -translate-y-1/2" />
+            
             {[
               { step: 1, title: "User / Platform", desc: "Email input from forms, APIs, or internal systems" },
               { step: 2, title: "GoldMail Intelligence Layer", desc: "Real-time validation, risk scoring, and fraud detection" },
               { step: 3, title: "Your Product / Agent / Workflow", desc: "Clean data and intelligence for your applications" }
-            ].map((item) => (
-              <Card key={item.step} className="p-6 bg-slate-900/50 border-slate-800 text-center relative">
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold mx-auto mb-4">
+            ].map((item, index) => (
+              <Card 
+                key={item.step} 
+                className="p-6 bg-slate-900/50 border-slate-800 text-center relative hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-1 animate-fade-in"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold mx-auto mb-4 group-hover:scale-110 transition-transform">
                   {item.step}
                 </div>
                 <h3 className="text-lg font-semibold mb-2 text-slate-100">{item.title}</h3>
@@ -511,7 +545,7 @@ const GoldMailValidation = () => {
             ))}
           </div>
           
-          <p className="text-center text-sm text-slate-500 mt-8">
+          <p className="text-center text-sm text-slate-500 mt-8 animate-fade-in" style={{ animationDelay: "500ms" }}>
             GoldMail operates silently as a decision layer, not a UI dependency.
           </p>
         </div>
@@ -521,7 +555,7 @@ const GoldMailValidation = () => {
       <section id="pricing" className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 mb-4">Usage-Based</Badge>
+            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 mb-4 animate-fade-in">Usage-Based</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Transparent Pricing</h2>
             <p className="text-slate-400">
               Starting at <span className="text-amber-400 font-semibold">$0.00149</span> per validation
@@ -529,10 +563,14 @@ const GoldMailValidation = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-6">
-            {pricingPlans.map((plan) => (
-              <Card key={plan.id} className={`p-6 bg-slate-900/50 border-slate-800 relative ${plan.popular ? "ring-2 ring-amber-500/50" : ""}`}>
+            {pricingPlans.map((plan, index) => (
+              <Card 
+                key={plan.id} 
+                className={`p-6 bg-slate-900/50 border-slate-800 relative transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-fade-in ${plan.popular ? "ring-2 ring-amber-500/50 hover:ring-amber-500/80" : "hover:border-slate-700"}`}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
                 {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-900">Popular</Badge>
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-900 animate-pulse">Popular</Badge>
                 )}
                 <div className="text-center mb-6">
                   <h3 className="text-xl font-semibold mb-2 text-slate-100">{plan.name}</h3>
@@ -548,13 +586,16 @@ const GoldMailValidation = () => {
                   ))}
                 </ul>
                 <Button 
-                  className={plan.popular 
+                  className={`${plan.popular 
                     ? "w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900" 
                     : "w-full border-slate-700 text-slate-300 hover:bg-slate-800"
-                  }
+                  } hover:scale-[1.02] transition-transform`}
                   variant={plan.popular ? "default" : "outline"}
+                  asChild
                 >
-                  {plan.id === "scale" ? "Contact Sales" : plan.popular ? "Choose Plan" : "Get Started"}
+                  <Link to={plan.id === "scale" ? "/request-access" : "/auth"}>
+                    {plan.id === "scale" ? "Contact Sales" : plan.popular ? "Choose Plan" : "Get Started"}
+                  </Link>
                 </Button>
               </Card>
             ))}
@@ -576,8 +617,12 @@ const GoldMailValidation = () => {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {developerFeatures.map((feature, i) => (
-              <Card key={i} className="p-6 bg-slate-900/50 border-slate-800">
-                <h3 className="text-lg font-semibold mb-2 text-slate-100">{feature.name}</h3>
+              <Card 
+                key={i} 
+                className="p-6 bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-all duration-300 group hover:-translate-y-1 animate-fade-in"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                <h3 className="text-lg font-semibold mb-2 text-slate-100 group-hover:text-amber-400 transition-colors">{feature.name}</h3>
                 <p className="text-sm text-slate-400">{feature.description}</p>
               </Card>
             ))}
@@ -587,12 +632,17 @@ const GoldMailValidation = () => {
             <h3 className="text-lg font-semibold mb-4 text-slate-300">Available SDKs</h3>
             <div className="flex justify-center flex-wrap gap-4 mb-6">
               {sdks.map((sdk, i) => (
-                <Badge key={i} variant="outline" className="border-slate-700 text-slate-400 px-4 py-2">
+                <Badge 
+                  key={i} 
+                  variant="outline" 
+                  className="border-slate-700 text-slate-400 px-4 py-2 hover:border-amber-500/50 hover:text-slate-300 transition-all cursor-default animate-fade-in"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
                   <code className="text-xs">{sdk.package}</code>
                 </Badge>
               ))}
             </div>
-            <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2" asChild>
+            <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 hover:scale-105 transition-transform" asChild>
               <Link to="/docs">
                 <BookOpen className="w-4 h-4" /> Read Documentation
               </Link>
