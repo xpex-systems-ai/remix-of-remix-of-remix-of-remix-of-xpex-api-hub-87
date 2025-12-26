@@ -151,7 +151,7 @@ function exportHistory(history: RequestHistoryItem[], format: 'json' | 'csv'): v
 }
 
 function generateCodeExample(endpoint: APIEndpoint, params: Record<string, string>, apiKey: string): { curl: string; javascript: string; python: string } {
-  const baseUrl = `https://bgfjhietjsrlzscxdutt.supabase.co/functions/v1${endpoint.path}`;
+  const baseUrl = `https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1${endpoint.path}`;
   const body = endpoint.exampleBody ? { ...endpoint.exampleBody, ...params } : params;
   const bodyStr = JSON.stringify(body, null, 2);
 
@@ -301,7 +301,7 @@ export function APIPlayground() {
     const startTime = performance.now();
 
     try {
-      const baseUrl = `https://bgfjhietjsrlzscxdutt.supabase.co/functions/v1${endpoint.path}`;
+      const baseUrl = `https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1${endpoint.path}`;
       const body = endpoint.exampleBody ? { ...endpoint.exampleBody, ...params } : params;
 
       const res = await fetch(baseUrl, {
