@@ -35,6 +35,10 @@ import BreachScan from "./pages/products/BreachScan";
 import CopyVoraz from "./pages/products/CopyVoraz";
 import ExtrairProdutos from "./pages/products/ExtrairProdutos";
 import GoldMailValidation from "./pages/products/GoldMailValidation";
+import GoldMailAPI from "./pages/products/GoldMailAPI";
+import GoldMailSaaS from "./pages/products/GoldMailSaaS";
+import GoldMailBundles from "./pages/products/GoldMailBundles";
+import RequestAccess from "./pages/RequestAccess";
 import Credits from "./pages/Credits";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
@@ -78,6 +82,10 @@ const App = () => (
                   <Route path="/products/copy-voraz" element={<CopyVoraz />} />
                   <Route path="/products/extrair-produtos" element={<ExtrairProdutos />} />
                   <Route path="/products/goldmail-validation" element={<GoldMailValidation />} />
+                  <Route path="/products/goldmail-api" element={<GoldMailAPI />} />
+                  <Route path="/products/goldmail-saas" element={<GoldMailSaaS />} />
+                  <Route path="/products/goldmail-bundles" element={<GoldMailBundles />} />
+                  <Route path="/request-access" element={<RequestAccess />} />
                   <Route path="/credits" element={<Credits />} />
                   <Route
                     path="/dashboard" 
