@@ -223,24 +223,38 @@ const GoldMailValidation = () => {
       toast.error("Please enter an email address");
       return;
     }
+    
+    if (!user) {
+      toast.error("Please sign in to test the API");
+      navigate("/auth");
+      return;
+    }
+
     setIsValidating(true);
+    setValidationResult(null);
+    
     try {
-      const { data, error } = await supabase.functions.invoke("validate-email", {
+      const { data, error } = await supabase.functions.invoke("validate-email-ai", {
         body: { email }
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Validation error:", error);
+        toast.error(error.message || "Validation failed");
+        return;
+      }
+      
+      if (data?.ok === false) {
+        toast.error(data.error || "Validation failed");
+        setValidationResult({ error: data.error, code: data.code });
+        return;
+      }
+      
       setValidationResult(data);
-      toast.success("Email validated successfully");
+      toast.success(`Email validated in ${data?.data?.response_time_ms || 0}ms`);
     } catch (err) {
-      console.error(err);
-      // Show mock result on error
-      setValidationResult({
-        decision: "ACCEPT",
-        confidence: "97%",
-        riskScore: "Low",
-        signals: ["MX Verified", "SMTP Check Passed", "No Disposable Detected", "High Domain Reputation"],
-        responseTime: "214ms"
-      });
+      console.error("Unexpected error:", err);
+      toast.error("Failed to connect to validation service");
     } finally {
       setIsValidating(false);
     }
@@ -416,32 +430,64 @@ const GoldMailValidation = () => {
             
             {validationResult && (
               <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700 animate-in fade-in duration-300">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">Decision</div>
-                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">{validationResult.decision || "ACCEPT"}</Badge>
+                {validationResult.error ? (
+                  <div className="text-center py-4">
+                    <Badge className="bg-red-500/20 text-red-400 border-red-500/30 mb-2">{validationResult.code || "ERROR"}</Badge>
+                    <p className="text-slate-400 text-sm">{validationResult.error}</p>
+                    {validationResult.code === "MISSING_API_KEY" && (
+                      <p className="text-xs text-slate-500 mt-2">Sign in and generate an API key in your dashboard to test.</p>
+                    )}
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">Confidence</div>
-                    <span className="text-lg font-semibold text-amber-400">{validationResult.confidence || "97%"}</span>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">Risk Score</div>
-                    <span className="text-sm text-slate-300">{validationResult.riskScore || "Low"}</span>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">Response Time</div>
-                    <span className="text-sm text-slate-300">{validationResult.responseTime || "214ms"}</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500 mb-2">Signals</div>
-                  <div className="flex flex-wrap gap-2">
-                    {(validationResult.signals || ["MX Verified", "SMTP Check Passed", "No Disposable Detected", "High Domain Reputation"]).map((signal: string, i: number) => (
-                      <Badge key={i} variant="outline" className="border-slate-600 text-slate-400 text-xs">{signal}</Badge>
-                    ))}
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <div className="text-xs text-slate-500 mb-1">Decision</div>
+                        <Badge className={validationResult.data?.valid ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                          {validationResult.data?.valid ? "ACCEPT" : "REJECT"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 mb-1">Score</div>
+                        <span className="text-lg font-semibold text-amber-400">{validationResult.data?.score || 0}/100</span>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 mb-1">Risk Level</div>
+                        <Badge className={
+                          validationResult.data?.risk_level === "low" ? "bg-green-500/20 text-green-400 border-green-500/30" :
+                          validationResult.data?.risk_level === "medium" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                          "bg-red-500/20 text-red-400 border-red-500/30"
+                        }>
+                          {validationResult.data?.risk_level?.toUpperCase() || "UNKNOWN"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 mb-1">Response Time</div>
+                        <span className="text-sm text-slate-300">{validationResult.data?.response_time_ms || 0}ms</span>
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <div className="text-xs text-slate-500 mb-2">Checks</div>
+                      <div className="flex flex-wrap gap-2">
+                        {validationResult.data?.format_valid && <Badge variant="outline" className="border-green-500/30 text-green-400 text-xs">Format Valid</Badge>}
+                        {validationResult.data?.mx_found && <Badge variant="outline" className="border-green-500/30 text-green-400 text-xs">MX Found</Badge>}
+                        {!validationResult.data?.disposable && <Badge variant="outline" className="border-green-500/30 text-green-400 text-xs">Not Disposable</Badge>}
+                        {validationResult.data?.disposable && <Badge variant="outline" className="border-red-500/30 text-red-400 text-xs">Disposable</Badge>}
+                        {validationResult.data?.ai_powered && <Badge variant="outline" className="border-amber-500/30 text-amber-400 text-xs">AI Powered</Badge>}
+                      </div>
+                    </div>
+                    {validationResult.data?.domain_analysis && (
+                      <div className="mb-4">
+                        <div className="text-xs text-slate-500 mb-1">AI Analysis</div>
+                        <p className="text-sm text-slate-300">{validationResult.data.domain_analysis}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-700">
+                      <span>Credits used: {validationResult.credits_used || 1}</span>
+                      <span>Remaining: {validationResult.remaining_credits?.toLocaleString() || 0}</span>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </Card>
