@@ -27,7 +27,6 @@ import Privacy from "./pages/legal/Privacy";
 import SLA from "./pages/legal/SLA";
 import Contact from "./pages/Contact";
 import Status from "./pages/Status";
-import GoldEmailValidator from "./pages/GoldEmailValidator";
 import BridgeScan from "./pages/products/BridgeScan";
 import IPInsight from "./pages/products/IPInsight";
 import LinkMagic from "./pages/products/LinkMagic";
@@ -38,10 +37,14 @@ import GoldMailValidation from "./pages/products/GoldMailValidation";
 import GoldMailAPI from "./pages/products/GoldMailAPI";
 import GoldMailSaaS from "./pages/products/GoldMailSaaS";
 import GoldMailBundles from "./pages/products/GoldMailBundles";
+import GoldMailPlugin from "./pages/products/GoldMailPlugin";
+import GoldMailExtension from "./pages/products/GoldMailExtension";
+import GoldMailAgent from "./pages/products/GoldMailAgent";
 import RequestAccess from "./pages/RequestAccess";
 import Credits from "./pages/Credits";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +77,9 @@ const App = () => (
                   <Route path="/legal/sla" element={<SLA />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/status" element={<Status />} />
-                  <Route path="/products/gold-email-validator" element={<GoldEmailValidator />} />
+                  {/* Legacy route redirect */}
+                  <Route path="/gold-email-validator" element={<Navigate to="/products/goldmail-validation" replace />} />
+                  <Route path="/products/gold-email-validator" element={<Navigate to="/products/goldmail-validation" replace />} />
                   <Route path="/products/bridgescan" element={<BridgeScan />} />
                   <Route path="/products/ip-insight" element={<IPInsight />} />
                   <Route path="/products/link-magic" element={<LinkMagic />} />
@@ -85,6 +90,9 @@ const App = () => (
                   <Route path="/products/goldmail-api" element={<GoldMailAPI />} />
                   <Route path="/products/goldmail-saas" element={<GoldMailSaaS />} />
                   <Route path="/products/goldmail-bundles" element={<GoldMailBundles />} />
+                  <Route path="/products/goldmail-plugin" element={<GoldMailPlugin />} />
+                  <Route path="/products/goldmail-extension" element={<GoldMailExtension />} />
+                  <Route path="/products/goldmail-agent" element={<GoldMailAgent />} />
                   <Route path="/request-access" element={<RequestAccess />} />
                   <Route path="/credits" element={<Credits />} />
                   <Route
