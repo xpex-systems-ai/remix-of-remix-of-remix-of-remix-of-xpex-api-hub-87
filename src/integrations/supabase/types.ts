@@ -197,6 +197,7 @@ export type Database = {
           file_name: string
           id: string
           invalid_emails: number
+          pending_emails: string[] | null
           processed_emails: number
           results: Json | null
           schedule_status: string | null
@@ -215,6 +216,7 @@ export type Database = {
           file_name: string
           id?: string
           invalid_emails?: number
+          pending_emails?: string[] | null
           processed_emails?: number
           results?: Json | null
           schedule_status?: string | null
@@ -233,6 +235,7 @@ export type Database = {
           file_name?: string
           id?: string
           invalid_emails?: number
+          pending_emails?: string[] | null
           processed_emails?: number
           results?: Json | null
           schedule_status?: string | null

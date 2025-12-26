@@ -98,16 +98,16 @@ serve(async (req) => {
       );
     }
 
-    const { jobId, emails, fileName } = await req.json();
+    const { jobId, emails, fileName, scheduledAt } = await req.json();
 
-    logStep("Bulk validation request", { userId: user.id, emailCount: emails?.length, jobId });
+    logStep("Bulk validation request", { userId: user.id, emailCount: emails?.length, jobId, scheduledAt });
 
     // If jobId provided, process in background
     if (jobId) {
       // Mark as processing
       await supabaseAdmin
         .from("bulk_validation_jobs")
-        .update({ status: "processing" })
+        .update({ status: "processing", schedule_status: "processing" })
         .eq("id", jobId);
 
       // Get user credits
@@ -126,6 +126,7 @@ serve(async (req) => {
           .from("bulk_validation_jobs")
           .update({
             status: "failed",
+            schedule_status: "immediate",
             error_message: "Insufficient credits",
             completed_at: new Date().toISOString(),
           })
@@ -183,12 +184,14 @@ serve(async (req) => {
         .from("bulk_validation_jobs")
         .update({
           status: "completed",
+          schedule_status: "immediate",
           processed_emails: emailsToProcess.length,
           valid_emails: validCount,
           invalid_emails: invalidCount,
           credits_used: creditsToDeduct,
           results: results,
           completed_at: new Date().toISOString(),
+          pending_emails: null, // Clear stored emails
         })
         .eq("id", jobId);
 
@@ -213,14 +216,21 @@ serve(async (req) => {
 
     // Create new job
     const emailList = emails as string[];
+    const isScheduled = scheduledAt && new Date(scheduledAt) > new Date();
+    
+    const jobData: Record<string, unknown> = {
+      user_id: user.id,
+      file_name: fileName || "bulk_validation.csv",
+      total_emails: emailList.length,
+      status: "pending",
+      schedule_status: isScheduled ? "scheduled" : "immediate",
+      scheduled_at: isScheduled ? scheduledAt : null,
+      pending_emails: isScheduled ? emailList : null, // Store emails for scheduled jobs
+    };
+
     const { data: job, error: jobError } = await supabaseAdmin
       .from("bulk_validation_jobs")
-      .insert({
-        user_id: user.id,
-        file_name: fileName || "bulk_validation.csv",
-        total_emails: emailList.length,
-        status: "pending",
-      })
+      .insert(jobData)
       .select()
       .single();
 
@@ -231,14 +241,18 @@ serve(async (req) => {
       );
     }
 
-    logStep("Job created", { jobId: job.id, totalEmails: emailList.length });
+    logStep("Job created", { jobId: job.id, totalEmails: emailList.length, scheduled: isScheduled });
 
     return new Response(
       JSON.stringify({
         success: true,
         job_id: job.id,
         total_emails: emailList.length,
-        message: "Job created. Call again with jobId to process.",
+        scheduled: isScheduled,
+        scheduled_at: isScheduled ? scheduledAt : null,
+        message: isScheduled 
+          ? `Job scheduled for ${scheduledAt}` 
+          : "Job created. Call again with jobId to process.",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

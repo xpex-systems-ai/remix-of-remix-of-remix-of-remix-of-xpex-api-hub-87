@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.bulk-validate-email]
 verify_jwt = false
+
+[functions.process-scheduled-validations]
+verify_jwt = false
