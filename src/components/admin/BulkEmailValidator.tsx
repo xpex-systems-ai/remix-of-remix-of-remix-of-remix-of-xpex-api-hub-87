@@ -4,13 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, FileText, CheckCircle, XCircle, Loader2, Download, Clock, AlertTriangle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, XCircle, Loader2, Download, Clock, AlertTriangle, Calendar } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCredits } from '@/hooks/useCredits';
 import { useToast } from '@/hooks/use-toast';
 import { useCreditModal } from '@/contexts/CreditModalContext';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, set, addDays } from 'date-fns';
 
 interface BulkJobResult {
   email: string;
@@ -31,7 +35,19 @@ interface BulkJob {
   results: BulkJobResult[] | null;
   created_at: string;
   completed_at: string | null;
+  scheduled_at: string | null;
+  schedule_status: string;
 }
+
+// Off-peak hours options (in local time)
+const SCHEDULE_OPTIONS = [
+  { value: 'immediate', label: 'Start immediately' },
+  { value: '02:00', label: '2:00 AM (off-peak)' },
+  { value: '03:00', label: '3:00 AM (off-peak)' },
+  { value: '04:00', label: '4:00 AM (off-peak)' },
+  { value: '05:00', label: '5:00 AM (off-peak)' },
+  { value: 'custom', label: 'Custom date/time' },
+];
 
 export const BulkEmailValidator = () => {
   const { user } = useAuth();
@@ -44,6 +60,15 @@ export const BulkEmailValidator = () => {
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Scheduling state
+  const [scheduleOption, setScheduleOption] = useState('immediate');
+  const [customDate, setCustomDate] = useState<Date | undefined>(addDays(new Date(), 1));
+  const [customHour, setCustomHour] = useState('02');
+  const [customMinute, setCustomMinute] = useState('00');
+  const [pendingEmails, setPendingEmails] = useState<string[]>([]);
+  const [pendingFileName, setPendingFileName] = useState('');
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
 
   const fetchJobs = useCallback(async () => {
     if (!user) return;
@@ -144,25 +169,11 @@ export const BulkEmailValidator = () => {
         return;
       }
 
-      // Create job
-      const { data, error } = await supabase.functions.invoke('bulk-validate-email', {
-        body: { emails: uniqueEmails, fileName: file.name },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Upload successful',
-        description: `Found ${uniqueEmails.length} unique emails. Starting validation...`,
-      });
-
-      // Start processing
-      if (data?.job_id) {
-        setProcessing(data.job_id);
-        await processJob(data.job_id, uniqueEmails, file.name);
-      }
-
-      fetchJobs();
+      // Store pending data and show schedule dialog
+      setPendingEmails(uniqueEmails);
+      setPendingFileName(file.name);
+      setShowScheduleDialog(true);
+      setUploading(false);
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -171,11 +182,90 @@ export const BulkEmailValidator = () => {
         description: 'Failed to process the file.',
         variant: 'destructive',
       });
-    } finally {
       setUploading(false);
+    } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const getScheduledTime = (): Date | null => {
+    if (scheduleOption === 'immediate') return null;
+    
+    if (scheduleOption === 'custom') {
+      if (!customDate) return null;
+      return set(customDate, { 
+        hours: parseInt(customHour), 
+        minutes: parseInt(customMinute), 
+        seconds: 0 
+      });
+    }
+    
+    // Predefined off-peak times - schedule for next occurrence
+    const [hours] = scheduleOption.split(':').map(Number);
+    const now = new Date();
+    let scheduled = set(now, { hours, minutes: 0, seconds: 0 });
+    
+    // If time has passed today, schedule for tomorrow
+    if (scheduled <= now) {
+      scheduled = addDays(scheduled, 1);
+    }
+    
+    return scheduled;
+  };
+
+  const handleScheduleConfirm = async () => {
+    if (pendingEmails.length === 0) return;
+    
+    setShowScheduleDialog(false);
+    setUploading(true);
+
+    try {
+      const scheduledAt = getScheduledTime();
+      
+      // Create job with schedule
+      const { data, error } = await supabase.functions.invoke('bulk-validate-email', {
+        body: { 
+          emails: pendingEmails, 
+          fileName: pendingFileName,
+          scheduledAt: scheduledAt?.toISOString() || null,
+        },
+      });
+
+      if (error) throw error;
+
+      if (scheduledAt) {
+        toast({
+          title: 'Validation scheduled',
+          description: `${pendingEmails.length} emails will be validated on ${format(scheduledAt, 'MMM d, yyyy')} at ${format(scheduledAt, 'HH:mm')}.`,
+        });
+      } else {
+        toast({
+          title: 'Upload successful',
+          description: `Found ${pendingEmails.length} unique emails. Starting validation...`,
+        });
+
+        // Start processing immediately
+        if (data?.job_id) {
+          setProcessing(data.job_id);
+          await processJob(data.job_id, pendingEmails, pendingFileName);
+        }
+      }
+
+      fetchJobs();
+    } catch (error) {
+      console.error('Schedule error:', error);
+      toast({
+        title: 'Scheduling failed',
+        description: 'Failed to schedule validation.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+      setPendingEmails([]);
+      setPendingFileName('');
+      setScheduleOption('immediate');
     }
   };
 
@@ -214,8 +304,18 @@ export const BulkEmailValidator = () => {
     URL.revokeObjectURL(url);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (job: BulkJob) => {
+    // Check if scheduled
+    if (job.schedule_status === 'scheduled' && job.scheduled_at) {
+      return (
+        <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+          <Calendar className="h-3 w-3 mr-1" />
+          {format(parseISO(job.scheduled_at), 'MMM d, HH:mm')}
+        </Badge>
+      );
+    }
+    
+    switch (job.status) {
       case 'completed':
         return <Badge variant="default" className="bg-neon-green/20 text-neon-green"><CheckCircle className="h-3 w-3 mr-1" />Completed</Badge>;
       case 'processing':
@@ -273,6 +373,100 @@ export const BulkEmailValidator = () => {
           </label>
         </div>
 
+        {/* Schedule Dialog */}
+        {showScheduleDialog && (
+          <Card className="border-primary/50">
+            <CardContent className="pt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{pendingFileName}</p>
+                  <p className="text-sm text-muted-foreground">{pendingEmails.length} emails to validate</p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setShowScheduleDialog(false);
+                  setPendingEmails([]);
+                  setPendingFileName('');
+                }}>
+                  Cancel
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                <Label>When to run validation?</Label>
+                <Select value={scheduleOption} onValueChange={setScheduleOption}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCHEDULE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {scheduleOption === 'custom' && (
+                  <div className="flex gap-3 items-start">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="justify-start text-left font-normal">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {customDate ? format(customDate, 'PPP') : 'Pick a date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={customDate}
+                          onSelect={setCustomDate}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    
+                    <div className="flex items-center gap-1">
+                      <Select value={customHour} onValueChange={setCustomHour}>
+                        <SelectTrigger className="w-[70px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span>:</span>
+                      <Select value={customMinute} onValueChange={setCustomMinute}>
+                        <SelectTrigger className="w-[70px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['00', '15', '30', '45'].map(m => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <Button onClick={handleScheduleConfirm} className="w-full" disabled={uploading}>
+                {uploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processing...</>
+                ) : scheduleOption === 'immediate' ? (
+                  'Start Validation Now'
+                ) : (
+                  <>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Validation
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Credits info */}
         <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
           <span className="text-sm text-muted-foreground">Available credits</span>
@@ -321,7 +515,7 @@ export const BulkEmailValidator = () => {
                           <span>{job.total_emails.toLocaleString()}</span>
                         )}
                       </TableCell>
-                      <TableCell>{getStatusBadge(job.status)}</TableCell>
+                      <TableCell>{getStatusBadge(job)}</TableCell>
                       <TableCell>
                         {job.status === 'completed' && (
                           <div className="flex gap-2 text-sm">
