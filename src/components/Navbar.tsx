@@ -19,7 +19,9 @@ const Navbar = () => {
   const { user } = useAuth();
 
   const products = [
-    { name: "GoldMail Validator", href: "/gold-email-validator", description: "API de validação de email enterprise" },
+    { name: "GoldMail Platform", href: "/products/goldmail-validation", description: "Plataforma de validação de email enterprise" },
+    { name: "GoldMail API", href: "/products/goldmail-api", description: "API REST para integração direta" },
+    { name: "GoldMail SaaS", href: "/products/goldmail-saas", description: "Dashboard visual para equipes" },
     { name: "Bridge Scan", href: "/marketplace", description: "Verificação de vazamentos de dados" },
     { name: "IP Insight", href: "/marketplace", description: "Geolocalização e análise de ameaças" },
     { name: "Link Magic", href: "/marketplace", description: "Monitoramento de saúde de URLs" },

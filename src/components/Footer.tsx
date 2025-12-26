@@ -56,6 +56,12 @@ const Footer = () => {
   };
 
   const links = {
+    products: [
+      { name: "GoldMail Platform", href: "/products/goldmail-validation", isRoute: true },
+      { name: "GoldMail API", href: "/products/goldmail-api", isRoute: true },
+      { name: "GoldMail SaaS", href: "/products/goldmail-saas", isRoute: true },
+      { name: "GoldMail Bundles", href: "/products/goldmail-bundles", isRoute: true },
+    ],
     product: [
       { name: "APIs", href: "/marketplace", isRoute: true },
       { name: "Preços", href: "/pricing", isRoute: true },
@@ -105,6 +111,23 @@ const Footer = () => {
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>
+          </div>
+
+          {/* GoldMail Products */}
+          <div>
+            <h4 className="font-semibold mb-4">GoldMail</h4>
+            <ul className="space-y-3">
+              {links.products.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.href}
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Links */}
