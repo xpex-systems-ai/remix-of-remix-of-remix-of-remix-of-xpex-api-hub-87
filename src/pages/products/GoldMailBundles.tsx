@@ -117,7 +117,7 @@ const GoldMailBundles = () => {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-6 animate-fade-in">
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              <CheckCircle className="w-3 h-3 mr-1" /> Available Now
+              <CheckCircle className="w-3 h-3 mr-1" /> Production Ready
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold">
@@ -126,8 +126,9 @@ const GoldMailBundles = () => {
               </span>
             </h1>
             
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Prebuilt stacks for SaaS, Marketing, and AI teams. Get exactly what you need, ready to deploy.
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              Prebuilt product stacks optimized for specific use cases. 
+              <span className="text-slate-300"> Get the right combination of products, ready to deploy in minutes.</span>
             </p>
 
             <div className="flex justify-center gap-3 flex-wrap pt-4">

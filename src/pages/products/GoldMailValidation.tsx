@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   Shield, AlertTriangle, Server, Globe, Sparkles, Zap, CheckCircle, 
   ArrowRight, Copy, Play, Grid3X3, BookOpen, Mail, TrendingUp, Clock,
-  Code, Activity, Users, Package, Puzzle, Chrome, Bot, Layers
+  Code, Activity, Users, Package, Puzzle, Chrome, Bot, Layers, Bell
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
@@ -69,31 +69,35 @@ const useCountUp = (end: number, duration: number = 2000, start: number = 0) => 
   return { count, ref };
 };
 
-// Product Suite Card Data
+// Product Suite Card Data - Ecosystem Products
 const productCards = [
   {
     id: "goldmail-api",
     name: "GoldMail API",
     type: "API",
-    status: "available",
-    badge: "Available",
-    description: "High-performance email validation and risk intelligence API.",
+    status: "live",
+    badge: "Live",
+    description: "Production-ready REST API with sub-200ms latency. Direct integration for developers and systems.",
     route: "/products/goldmail-api",
-    features: ["REST API", "WebSocket", "GraphQL", "OpenAPI"],
+    features: ["REST API", "WebSocket", "GraphQL", "OpenAPI 3.0"],
     icon: Code,
-    badgeColor: "bg-green-500/20 text-green-400 border-green-500/30"
+    badgeColor: "bg-green-500/20 text-green-400 border-green-500/30",
+    cta: "View API Docs",
+    targetAudience: "Developers, Engineering Teams"
   },
   {
     id: "goldmail-saas",
     name: "GoldMail SaaS",
     type: "SaaS",
-    status: "available",
-    badge: "Available",
-    description: "Enterprise dashboard with analytics, logs, credits and alerts.",
+    status: "live",
+    badge: "Live",
+    description: "Full-featured dashboard for teams. Analytics, bulk validation, credit management, and team collaboration.",
     route: "/products/goldmail-saas",
-    features: ["Dashboard", "Analytics", "Logs", "Alerts"],
+    features: ["Dashboard", "Analytics", "Bulk Validation", "Team Management"],
     icon: Activity,
-    badgeColor: "bg-green-500/20 text-green-400 border-green-500/30"
+    badgeColor: "bg-green-500/20 text-green-400 border-green-500/30",
+    cta: "Open SaaS",
+    targetAudience: "Operations, Marketing Teams"
   },
   {
     id: "goldmail-plugin",
@@ -101,47 +105,55 @@ const productCards = [
     type: "Plugin",
     status: "beta",
     badge: "Beta",
-    description: "Drop-in form validation for platforms and websites.",
+    description: "Drop-in validation widget for forms and websites. Zero-config, instant protection.",
     route: "/products/goldmail-plugin",
-    features: ["JavaScript", "React", "Vue", "Web Components"],
+    features: ["JavaScript SDK", "React", "Vue", "Web Components"],
     icon: Puzzle,
-    badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/30"
+    badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    cta: "Install Plugin",
+    targetAudience: "Frontend Developers, No-Code Teams"
   },
   {
     id: "goldmail-extension",
     name: "GoldMail Extension",
     type: "Extension",
     status: "planned",
-    badge: "Planned",
-    description: "Browser-level validation and enrichment.",
+    badge: "Q2 2025",
+    description: "Browser extension for real-time validation while browsing. Validate emails anywhere on the web.",
     route: "/products/goldmail-extension",
     features: ["Chrome", "Firefox", "Safari", "Edge"],
     icon: Chrome,
-    badgeColor: "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    badgeColor: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+    cta: "Notify Me",
+    targetAudience: "Sales, Support Teams"
   },
   {
     id: "goldmail-agent",
     name: "GoldMail Agent",
     type: "Agent",
     status: "planned",
-    badge: "Planned",
-    description: "Autonomous email intelligence agent for workflows.",
+    badge: "Q3 2025",
+    description: "Autonomous email intelligence for AI workflows. LangChain and LlamaIndex compatible.",
     route: "/products/goldmail-agent",
-    features: ["LangChain", "LlamaIndex", "Autonomous", "Workflows"],
+    features: ["LangChain", "LlamaIndex", "Function Calling", "Streaming"],
     icon: Bot,
-    badgeColor: "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    badgeColor: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+    cta: "Notify Me",
+    targetAudience: "AI Engineers, Automation Teams"
   },
   {
     id: "goldmail-bundles",
     name: "GoldMail Bundles",
     type: "Bundle",
-    status: "available",
-    badge: "Available",
-    description: "Prebuilt stacks for SaaS, Marketing and AI teams.",
+    status: "live",
+    badge: "Live",
+    description: "Prebuilt product stacks optimized for SaaS, Marketing, AI, and Enterprise use cases.",
     route: "/products/goldmail-bundles",
     features: ["SaaS Stack", "Marketing Stack", "AI Stack", "Enterprise"],
     icon: Layers,
-    badgeColor: "bg-green-500/20 text-green-400 border-green-500/30"
+    badgeColor: "bg-green-500/20 text-green-400 border-green-500/30",
+    cta: "View Bundles",
+    targetAudience: "Product Teams, Enterprises"
   }
 ];
 
@@ -287,7 +299,7 @@ const GoldMailValidation = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section - Platform Hub Positioning */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950" />
         <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[150px] animate-pulse" />
@@ -296,39 +308,44 @@ const GoldMailValidation = () => {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-8">
             <div className="flex justify-center gap-2 flex-wrap animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:scale-105 transition-transform cursor-default">
+                <Layers className="w-3 h-3 mr-1" /> Platform
+              </Badge>
               <Badge className="bg-green-500/20 text-green-400 border border-green-500/30 hover:scale-105 transition-transform cursor-default">
                 <CheckCircle className="w-3 h-3 mr-1" /> Enterprise Ready
               </Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">API-First</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">Usage-Based Billing</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">6 Products</Badge>
               <Badge variant="outline" className="border-slate-600 text-slate-300 hover:scale-105 transition-transform cursor-default">Global Infrastructure</Badge>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight animate-fade-in" style={{ animationDelay: "200ms" }}>
               <span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
-                GoldMail Validation
+                Email Intelligence
               </span>
+              <br />
+              <span className="text-slate-100 text-4xl md:text-5xl">Platform</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: "300ms" }}>
-              Enterprise-grade email validation, risk scoring and delivery intelligence.
+            <p className="text-xl md:text-2xl text-slate-400 max-w-4xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: "300ms" }}>
+              The unified infrastructure layer for email validation, risk intelligence, and deliverability. 
+              <span className="text-slate-300"> One platform. Six products. Infinite scale.</span>
             </p>
 
             <div className="flex justify-center gap-4 flex-wrap pt-4 animate-fade-in" style={{ animationDelay: "400ms" }}>
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900 font-semibold gap-2 hover:scale-105 transition-transform"
-                onClick={() => scrollToSection("live-test")}
+                onClick={() => scrollToSection("products")}
               >
-                <Play className="w-4 h-4" /> Run Live Test
+                <Grid3X3 className="w-4 h-4" /> Explore Ecosystem
               </Button>
               <Button 
                 variant="outline" 
                 size="lg" 
                 className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 hover:scale-105 transition-transform"
-                onClick={() => scrollToSection("products")}
+                onClick={() => scrollToSection("live-test")}
               >
-                <Grid3X3 className="w-4 h-4" /> View Products
+                <Play className="w-4 h-4" /> Try Live Demo
               </Button>
             </div>
           </div>
@@ -431,35 +448,60 @@ const GoldMailValidation = () => {
         </div>
       </section>
 
-      {/* Overview Section */}
+      {/* Overview Section - Platform Positioning */}
       <section id="overview" className="py-20 px-4 bg-slate-900/30">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">What is GoldMail Validation?</h2>
-            <p className="text-slate-400 max-w-3xl mx-auto text-lg">
-              GoldMail Validation is the intelligence layer that sits between user input and business decision. 
-              It validates emails, scores risk, prevents fraud and improves deliverability at scale.
+            <Badge className="bg-slate-800 text-slate-300 border-slate-700 mb-4">Platform Overview</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">The Email Intelligence Infrastructure</h2>
+            <p className="text-slate-400 max-w-4xl mx-auto text-lg">
+              GoldMail is not a single product—it's a complete platform ecosystem. 
+              The core validation engine powers six specialized products, each designed for specific teams and use cases.
+              <span className="text-slate-300 block mt-2">Choose the interface that fits your workflow. Share credits across all products.</span>
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6 bg-slate-900/50 border-slate-800">
-              <h3 className="text-xl font-semibold mb-4 text-amber-400">Core Intelligence</h3>
-              <ul className="space-y-3">
-                {["Real-time email validation", "Risk scoring (0-100)", "Fraud detection", "Deliverability optimization"].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4">
+                <Zap className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-slate-100">Core Engine</h3>
+              <p className="text-sm text-slate-400 mb-4">Real-time validation, risk scoring, fraud detection, and deliverability intelligence.</p>
+              <ul className="space-y-2">
+                {["Sub-200ms latency", "99.99% uptime SLA", "Global edge network"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
                     {item}
                   </li>
                 ))}
               </ul>
             </Card>
             <Card className="p-6 bg-slate-900/50 border-slate-800">
-              <h3 className="text-xl font-semibold mb-4 text-amber-400">Infrastructure</h3>
-              <ul className="space-y-3">
-                {["Global edge network", "Multi-region redundancy", "Enterprise SLAs", "Usage-based scaling"].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4">
+                <Code className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-slate-100">Developer-First</h3>
+              <p className="text-sm text-slate-400 mb-4">REST API, SDKs, webhooks, and comprehensive documentation for seamless integration.</p>
+              <ul className="space-y-2">
+                {["OpenAPI 3.0 spec", "4 official SDKs", "Real-time webhooks"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+            <Card className="p-6 bg-slate-900/50 border-slate-800">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-slate-100">Team-Ready</h3>
+              <p className="text-sm text-slate-400 mb-4">Dashboard, analytics, bulk validation, and collaboration features for entire organizations.</p>
+              <ul className="space-y-2">
+                {["Role-based access", "Shared credit pool", "Audit logging"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
                     {item}
                   </li>
                 ))}
@@ -469,27 +511,37 @@ const GoldMailValidation = () => {
         </div>
       </section>
 
-      {/* Products Section */}
+      {/* Products Section - Ecosystem */}
       <section id="products" className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">GoldMail Product Suite</h2>
-            <p className="text-slate-400">One core. Multiple delivery formats.</p>
+            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 mb-4">Ecosystem</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">GoldMail Product Ecosystem</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              Six specialized products built on one core engine. Each product is enterprise-ready with its own interface, 
+              documentation, and support—all sharing a unified credit system.
+            </p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {productCards.map((product, index) => (
               <Card 
                 key={product.id} 
-                className="p-6 bg-slate-900/50 border-slate-800 hover:border-amber-500/30 transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/5 animate-fade-in"
+                className={`p-6 bg-slate-900/50 border-slate-800 hover:border-amber-500/30 transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/5 animate-fade-in ${product.status === "live" ? "ring-1 ring-green-500/20" : ""}`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <product.icon className="w-10 h-10 text-amber-400 group-hover:scale-110 transition-transform duration-300" />
                   <Badge className={`${product.badgeColor} group-hover:scale-105 transition-transform`}>{product.badge}</Badge>
                 </div>
+                <div className="mb-1">
+                  <span className="text-xs text-slate-500 uppercase tracking-wider">{product.type}</span>
+                </div>
                 <h3 className="text-xl font-semibold mb-2 text-slate-100 group-hover:text-amber-400 transition-colors">{product.name}</h3>
-                <p className="text-sm text-slate-400 mb-4">{product.description}</p>
+                <p className="text-sm text-slate-400 mb-3">{product.description}</p>
+                <div className="text-xs text-slate-500 mb-3">
+                  <span className="text-slate-400">Target:</span> {product.targetAudience}
+                </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {product.features.map((feature, i) => (
                     <Badge key={i} variant="outline" className="border-slate-700 text-slate-500 text-xs hover:border-slate-600 transition-colors">{feature}</Badge>
@@ -498,13 +550,13 @@ const GoldMailValidation = () => {
                 <Button 
                   variant={product.status === "planned" ? "ghost" : "outline"} 
                   size="sm" 
-                  className={`${product.status === "planned" ? "text-slate-500" : "border-slate-700 text-slate-300 hover:bg-slate-800"} transition-all duration-300 hover:gap-3`}
+                  className={`w-full ${product.status === "planned" ? "text-slate-500" : "border-slate-700 text-slate-300 hover:bg-slate-800"} transition-all duration-300`}
                   asChild={product.status !== "planned"}
                 >
                   {product.status === "planned" ? (
-                    <span>Notify Me</span>
+                    <span className="flex items-center justify-center gap-2"><Bell className="w-3 h-3" /> {product.cta}</span>
                   ) : (
-                    <Link to={product.route} className="flex items-center gap-2">View {product.type} <ArrowRight className="w-3 h-3" /></Link>
+                    <Link to={product.route} className="flex items-center justify-center gap-2">{product.cta} <ArrowRight className="w-3 h-3" /></Link>
                   )}
                 </Button>
               </Card>
