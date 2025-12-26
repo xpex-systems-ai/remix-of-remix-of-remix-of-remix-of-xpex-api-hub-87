@@ -89,7 +89,7 @@ const GoldMailSaaS = () => {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-6 animate-fade-in">
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              <CheckCircle className="w-3 h-3 mr-1" /> Available Now
+              <CheckCircle className="w-3 h-3 mr-1" /> Production Ready
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold">
@@ -98,15 +98,16 @@ const GoldMailSaaS = () => {
               </span>
             </h1>
             
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Enterprise dashboard with analytics, logs, credits, and team collaboration—all in one place.
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              Enterprise dashboard for operations and marketing teams. 
+              <span className="text-slate-300"> Bulk validation, analytics, credit management, and team collaboration—no code required.</span>
             </p>
 
             <div className="flex justify-center gap-3 flex-wrap pt-4">
               <Badge variant="outline" className="border-slate-600 text-slate-300">Dashboard</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300">Bulk Validation</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300">Team Management</Badge>
               <Badge variant="outline" className="border-slate-600 text-slate-300">Analytics</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Logs</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Alerts</Badge>
             </div>
 
             <div className="flex justify-center gap-4 pt-4">
@@ -117,10 +118,29 @@ const GoldMailSaaS = () => {
               </Button>
               <Button variant="outline" size="lg" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2" asChild>
                 <Link to="/dashboard">
-                  <LayoutDashboard className="w-4 h-4" /> View Demo
+                  <LayoutDashboard className="w-4 h-4" /> Open Dashboard
                 </Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Target Audience */}
+      <section className="py-12 px-4 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-4 gap-6 text-center">
+            {[
+              { role: "Marketing Teams", desc: "Clean email lists before campaigns" },
+              { role: "Operations", desc: "Bulk validation and data hygiene" },
+              { role: "Growth Teams", desc: "Lead quality scoring" },
+              { role: "Compliance", desc: "Audit logs and reporting" }
+            ].map((item, i) => (
+              <div key={i}>
+                <h3 className="font-semibold text-purple-400 mb-1">{item.role}</h3>
+                <p className="text-sm text-slate-500">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

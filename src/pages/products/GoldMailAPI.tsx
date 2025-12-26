@@ -10,30 +10,68 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+// Target Audience
+const targetAudience = [
+  { role: "Backend Engineers", useCase: "Direct API integration for user signup, form validation, and data pipelines" },
+  { role: "DevOps Teams", useCase: "Automated email hygiene in CI/CD workflows and data processing" },
+  { role: "AI/ML Engineers", useCase: "Training data validation and autonomous agent email intelligence" },
+  { role: "Platform Teams", useCase: "Multi-tenant email validation for SaaS platforms" }
+];
+
+// Value Propositions
+const valueProps = [
+  { 
+    title: "Production-Ready in Minutes", 
+    description: "OpenAPI 3.0 spec, official SDKs for 4 languages, and comprehensive documentation. From zero to production in under 30 minutes.",
+    metric: "<30 min"
+  },
+  { 
+    title: "Sub-200ms Latency", 
+    description: "Global edge network with 10+ locations ensures low-latency responses regardless of user geography.",
+    metric: "200ms"
+  },
+  { 
+    title: "Enterprise-Grade Reliability", 
+    description: "99.9% uptime SLA with automatic failover, rate limiting, and comprehensive monitoring.",
+    metric: "99.9%"
+  }
+];
+
 const apiEndpoints = [
   {
     method: "POST",
     path: "/v1/validate",
-    description: "Validate a single email address",
-    badge: "Core"
+    description: "Validate a single email address with full risk analysis",
+    badge: "Core",
+    latency: "~150ms"
   },
   {
     method: "POST",
     path: "/v1/validate/bulk",
-    description: "Validate multiple emails in batch",
-    badge: "Bulk"
+    description: "Validate up to 10,000 emails in a single request",
+    badge: "Bulk",
+    latency: "async"
   },
   {
     method: "GET",
-    path: "/v1/validate/status/:id",
-    description: "Check bulk validation job status",
-    badge: "Status"
+    path: "/v1/validate/status/:jobId",
+    description: "Check bulk validation job status and retrieve results",
+    badge: "Status",
+    latency: "~50ms"
   },
   {
     method: "POST",
     path: "/v1/risk-score",
-    description: "Get detailed risk analysis",
-    badge: "Risk"
+    description: "Get detailed risk analysis without full validation",
+    badge: "Risk",
+    latency: "~100ms"
+  },
+  {
+    method: "GET",
+    path: "/v1/credits",
+    description: "Check current credit balance and usage",
+    badge: "Account",
+    latency: "~30ms"
   }
 ];
 
@@ -41,10 +79,10 @@ const codeExample = `// JavaScript SDK Example
 import { GoldMail } from '@xpex/goldmail-js';
 
 const goldmail = new GoldMail({
-  apiKey: 'your-api-key'
+  apiKey: process.env.GOLDMAIL_API_KEY
 });
 
-// Validate single email
+// Validate single email with full analysis
 const result = await goldmail.validate('user@example.com');
 
 console.log(result);
@@ -52,21 +90,32 @@ console.log(result);
 //   valid: true,
 //   score: 97,
 //   risk: 'low',
+//   recommendation: 'accept',
 //   details: {
 //     format: true,
 //     mx: true,
 //     smtp: true,
-//     disposable: false
-//   }
+//     disposable: false,
+//     role: false,
+//     free: true
+//   },
+//   latency: 142
 // }`;
 
 const features = [
-  { icon: Zap, title: "Sub-200ms Response", description: "Average latency across global edge network" },
-  { icon: Shield, title: "Enterprise Security", description: "SOC2 compliant with encrypted data in transit" },
-  { icon: Globe, title: "Global Infrastructure", description: "10+ edge locations for low-latency access" },
-  { icon: Lock, title: "API Key Management", description: "Multiple keys with granular permissions" },
-  { icon: Activity, title: "Real-time Monitoring", description: "Live dashboard with usage analytics" },
-  { icon: Clock, title: "99.9% Uptime SLA", description: "Enterprise-grade reliability guarantee" }
+  { icon: Zap, title: "Sub-200ms Response", description: "P95 latency under 200ms across all global edge locations" },
+  { icon: Shield, title: "Enterprise Security", description: "SOC2 Type II compliant, encrypted in transit and at rest" },
+  { icon: Globe, title: "Global Edge Network", description: "10+ edge locations for low-latency access worldwide" },
+  { icon: Lock, title: "Granular API Keys", description: "Multiple keys with per-key rate limits and permissions" },
+  { icon: Activity, title: "Real-time Monitoring", description: "Live metrics, usage logs, and alerting via dashboard" },
+  { icon: Clock, title: "99.9% Uptime SLA", description: "Enterprise reliability with automatic failover and credits" }
+];
+
+const useCases = [
+  { title: "User Signup", description: "Validate emails at registration to prevent fake accounts and reduce fraud" },
+  { title: "Form Validation", description: "Real-time validation in contact forms, checkout flows, and lead capture" },
+  { title: "Data Pipeline", description: "Bulk validation for CRM imports, data migrations, and list hygiene" },
+  { title: "AI Agents", description: "Email intelligence for autonomous agents and AI-powered workflows" }
 ];
 
 const GoldMailAPI = () => {
@@ -119,7 +168,7 @@ const GoldMailAPI = () => {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-6 animate-fade-in">
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              <CheckCircle className="w-3 h-3 mr-1" /> Available Now
+              <CheckCircle className="w-3 h-3 mr-1" /> Production Ready
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold">
@@ -128,8 +177,9 @@ const GoldMailAPI = () => {
               </span>
             </h1>
             
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              High-performance email validation and risk intelligence API with sub-200ms response times.
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              High-performance email validation and risk intelligence API. 
+              <span className="text-slate-300"> Built for developers who need enterprise reliability without enterprise complexity.</span>
             </p>
 
             <div className="flex justify-center gap-3 flex-wrap pt-4">
@@ -142,15 +192,45 @@ const GoldMailAPI = () => {
             <div className="flex justify-center gap-4 pt-4">
               <Button size="lg" className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900 font-semibold gap-2" asChild>
                 <Link to="/request-access">
-                  Get Started <ArrowRight className="w-4 h-4" />
+                  Get API Key <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2" asChild>
                 <Link to="/docs">
-                  <Terminal className="w-4 h-4" /> View Docs
+                  <Terminal className="w-4 h-4" /> Read Docs
                 </Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Value Propositions */}
+      <section className="py-12 px-4 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-3 gap-6">
+            {valueProps.map((prop, i) => (
+              <div key={i} className="text-center">
+                <div className="text-3xl font-bold text-blue-400 mb-2">{prop.metric}</div>
+                <h3 className="font-semibold text-slate-100 mb-1">{prop.title}</h3>
+                <p className="text-sm text-slate-500">{prop.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Target Audience */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl font-bold mb-8 text-center">Built for Technical Teams</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {targetAudience.map((audience, i) => (
+              <Card key={i} className="p-4 bg-slate-900/50 border-slate-800 hover:border-blue-500/30 transition-all">
+                <h3 className="font-semibold text-slate-100 mb-2">{audience.role}</h3>
+                <p className="text-xs text-slate-400">{audience.useCase}</p>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -175,7 +255,7 @@ const GoldMailAPI = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-slate-500 hidden sm:block">{endpoint.description}</span>
-                  <Badge variant="outline" className="border-slate-700 text-slate-500">{endpoint.badge}</Badge>
+                  <Badge variant="outline" className="border-slate-700 text-slate-500">{endpoint.latency}</Badge>
                 </div>
               </Card>
             ))}
@@ -228,12 +308,27 @@ const GoldMailAPI = () => {
         </div>
       </section>
 
+      {/* Use Cases */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl font-bold mb-8 text-center">Common Use Cases</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {useCases.map((useCase, i) => (
+              <Card key={i} className="p-6 bg-slate-900/50 border-slate-800 hover:border-blue-500/30 transition-all">
+                <h3 className="font-semibold text-slate-100 mb-2">{useCase.title}</h3>
+                <p className="text-sm text-slate-400">{useCase.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-slate-900/30">
         <div className="container mx-auto max-w-4xl text-center">
           <Card className="p-10 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 border-blue-500/20 animate-fade-in">
             <h2 className="text-3xl font-bold mb-4">Ready to integrate?</h2>
-            <p className="text-slate-400 mb-6">Get your API key and start validating emails in minutes.</p>
+            <p className="text-slate-400 mb-6">Get your API key and start validating emails in under 5 minutes.</p>
             <div className="flex justify-center gap-4">
               <Button size="lg" className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900 font-semibold" asChild>
                 <Link to="/request-access">Request API Key</Link>
