@@ -1,0 +1,46 @@
+{
+  "name": "@xpex/goldmail-sdk",
+  "version": "1.0.0",
+  "description": "Official TypeScript SDK for XPEX Neural GoldMail Email Validation API",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "eslint src/",
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "email",
+    "validation",
+    "verification",
+    "api",
+    "xpex",
+    "goldmail",
+    "typescript"
+  ],
+  "author": "XPEX Neural",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xpex-neural/goldmail-sdk"
+  },
+  "homepage": "https://xpexneural.com/products/goldmail-api",
+  "bugs": {
+    "url": "https://github.com/xpex-neural/goldmail-sdk/issues"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
