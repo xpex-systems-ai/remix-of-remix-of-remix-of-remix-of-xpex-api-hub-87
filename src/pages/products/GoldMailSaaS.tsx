@@ -200,15 +200,18 @@ const GoldMailSaaS = () => {
               <div>
                 <h3 className="text-2xl font-semibold mb-3 text-slate-100">Enterprise-Grade Security</h3>
                 <p className="text-slate-400 mb-4">
-                  SOC2 Type II compliant with end-to-end encryption, role-based access control, 
-                  and comprehensive audit logging. Your data is protected by industry-leading security practices.
+                  Built with security-first architecture including end-to-end encryption, role-based access control (RBAC), 
+                  comprehensive audit logging, and data residency controls. Your data is protected by industry-leading security practices.
                 </p>
                 <div className="flex gap-3 flex-wrap">
-                  <Badge variant="outline" className="border-slate-700 text-slate-400">SOC2 Compliant</Badge>
-                  <Badge variant="outline" className="border-slate-700 text-slate-400">GDPR Ready</Badge>
-                  <Badge variant="outline" className="border-slate-700 text-slate-400">SSO Support</Badge>
-                  <Badge variant="outline" className="border-slate-700 text-slate-400">MFA Enabled</Badge>
+                  <Badge variant="outline" className="border-green-700 text-green-400">TLS 1.3 Encryption</Badge>
+                  <Badge variant="outline" className="border-green-700 text-green-400">RBAC Enabled</Badge>
+                  <Badge variant="outline" className="border-green-700 text-green-400">Audit Logging</Badge>
+                  <Badge variant="outline" className="border-amber-700 text-amber-400">GDPR Tooling</Badge>
                 </div>
+                <p className="text-xs text-slate-500 mt-3">
+                  * SOC2 Type II certification in progress. Contact us for enterprise security requirements.
+                </p>
               </div>
             </div>
           </Card>
