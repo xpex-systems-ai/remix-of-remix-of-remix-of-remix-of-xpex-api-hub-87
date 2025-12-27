@@ -234,8 +234,25 @@ const GoldMailValidation = () => {
     setValidationResult(null);
     
     try {
+      // Fetch user's first active API key
+      const { data: apiKeys, error: keysError } = await supabase
+        .from("api_keys")
+        .select("key")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .limit(1);
+      
+      if (keysError || !apiKeys?.length) {
+        toast.error("No active API key found. Please create one in Dashboard → API Keys");
+        navigate("/dashboard");
+        return;
+      }
+
+      const apiKey = apiKeys[0].key;
+      
       const { data, error } = await supabase.functions.invoke("validate-email-ai", {
-        body: { email }
+        body: { email },
+        headers: { "X-API-Key": apiKey }
       });
       
       if (error) {
