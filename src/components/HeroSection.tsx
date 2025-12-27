@@ -3,8 +3,17 @@ import { ArrowRight, Play, Sparkles } from "lucide-react";
 import LiveValidator from "./LiveValidator";
 import { useValidationStats } from "@/hooks/useValidationStats";
 import { analytics } from "@/lib/analytics";
+
 const HeroSection = () => {
   const { stats } = useValidationStats();
+
+  // Format validation count honestly
+  const formatValidations = (count: number) => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    if (count > 0) return count.toString();
+    return "—"; // Show dash when no data
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -26,7 +35,7 @@ const HeroSection = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm text-muted-foreground">
-              Powering the Agent Economy
+              Production-Ready Email Validation API
             </span>
           </div>
 
@@ -76,16 +85,28 @@ const HeroSection = () => {
             <LiveValidator />
           </div>
 
-          {/* Stats */}
+          {/* Stats - Only show real data or honest messaging */}
           <div className="grid grid-cols-3 gap-8 mt-16 animate-fade-in" style={{ animationDelay: "0.4s" }}>
             {[
-              { value: `${(stats.total_validations / 1000000).toFixed(1)}M+`, label: "Validações" },
-              { value: `${stats.avg_latency_ms}ms`, label: "Latência" },
-              { value: `${stats.success_rate}%`, label: "Precisão" },
+              { 
+                value: formatValidations(stats.total_validations), 
+                label: "Validações",
+                show: stats.total_validations > 0
+              },
+              { 
+                value: `${stats.avg_latency_ms}ms`, 
+                label: "Latência Média",
+                show: true
+              },
+              { 
+                value: `${stats.success_rate}%`, 
+                label: "Precisão",
+                show: true
+              },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-gradient mb-1">
-                  {stat.value}
+                  {stat.show ? stat.value : "—"}
                 </div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
               </div>

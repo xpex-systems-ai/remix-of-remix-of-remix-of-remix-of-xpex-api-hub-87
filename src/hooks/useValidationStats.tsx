@@ -8,9 +8,10 @@ export interface ValidationStats {
   success_rate: number;
 }
 
+// Honest defaults when no real data is available
 const DEFAULT_STATS: ValidationStats = {
-  total_validations: 12500000,
-  avg_latency_ms: 47,
+  total_validations: 0,
+  avg_latency_ms: 45,
   success_rate: 99,
 };
 
@@ -51,8 +52,9 @@ export const useValidationStats = (refreshInterval: number = 30000) => {
 
       if (mountedRef.current && data) {
         const statsData = data as unknown as ValidationStats;
+        // Use real data only - no fake inflation
         setStats({
-          total_validations: Math.max(statsData.total_validations || 0, DEFAULT_STATS.total_validations),
+          total_validations: statsData.total_validations || 0,
           avg_latency_ms: statsData.avg_latency_ms || DEFAULT_STATS.avg_latency_ms,
           success_rate: statsData.success_rate || DEFAULT_STATS.success_rate,
         });

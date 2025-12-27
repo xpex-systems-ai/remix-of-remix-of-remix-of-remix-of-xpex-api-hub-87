@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Copy, Check, Play, Code, Book, Terminal, Zap, FileJson } from "lucide-react";
+import { ArrowLeft, Copy, Check, Play, Code, Book, Terminal, Zap, FileJson, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
+import { supabase } from "@/integrations/supabase/client";
 
 // OpenAPI 3.0 Specification
 const openApiSpec = {
@@ -46,6 +48,7 @@ const openApiSpec = {
           },
           "400": { description: "Invalid request" },
           "401": { description: "Invalid or missing API key" },
+          "402": { description: "Insufficient credits" },
           "429": { description: "Rate limit exceeded" },
         },
       },
@@ -89,14 +92,19 @@ const endpoints = [
   "email": "test@gmail.com"
 }`,
     response: `{
-  "email": "test@gmail.com",
-  "valid": true,
-  "score": 95,
-  "formatValid": true,
-  "isDisposable": false,
-  "mxValid": true,
-  "domain": "gmail.com",
-  "suggestion": null
+  "ok": true,
+  "data": {
+    "email": "test@gmail.com",
+    "valid": true,
+    "score": 95,
+    "formatValid": true,
+    "isDisposable": false,
+    "mxValid": true,
+    "domain": "gmail.com",
+    "suggestion": null
+  },
+  "credits_used": 1,
+  "remaining_credits": 99
 }`,
   },
   {
@@ -109,19 +117,23 @@ const endpoints = [
   "email": "test@gmail.com"
 }`,
     response: `{
-  "email": "test@gmail.com",
-  "isValid": true,
-  "riskLevel": "low",
-  "riskScore": 15,
-  "analysis": {
-    "formatValid": true,
-    "domainType": "established_provider",
-    "hasSuspiciousPatterns": false,
-    "typosquattingRisk": "none",
-    "fraudIndicators": []
+  "ok": true,
+  "data": {
+    "email": "test@gmail.com",
+    "isValid": true,
+    "riskLevel": "low",
+    "riskScore": 15,
+    "analysis": {
+      "formatValid": true,
+      "domainType": "established_provider",
+      "hasSuspiciousPatterns": false,
+      "typosquattingRisk": "none"
+    },
+    "recommendation": "Safe to use",
+    "confidence": 0.95
   },
-  "recommendation": "Safe to use",
-  "confidence": 0.95
+  "credits_used": 1,
+  "remaining_credits": 99
 }`,
   },
   {
@@ -175,8 +187,11 @@ const Docs = () => {
   const [selectedEndpoint, setSelectedEndpoint] = useState(endpoints[0]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [playgroundEmail, setPlaygroundEmail] = useState("test@gmail.com");
+  const [playgroundApiKey, setPlaygroundApiKey] = useState("");
   const [playgroundResult, setPlaygroundResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [responseStatus, setResponseStatus] = useState<number | null>(null);
+  const [responseTime, setResponseTime] = useState<number | null>(null);
 
   const copyCode = (code: string, id: string) => {
     navigator.clipboard.writeText(code);
@@ -197,31 +212,63 @@ const Docs = () => {
   };
 
   const runPlayground = async () => {
-    setIsLoading(true);
-    // Simulated API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    const isValid = playgroundEmail.includes("@") && playgroundEmail.includes(".");
-    const isDisposable = ["tempmail.com", "guerrillamail.com", "10minutemail.com"].some(
-      (d) => playgroundEmail.includes(d)
-    );
-    const score = isValid ? (isDisposable ? 30 : Math.floor(Math.random() * 20) + 75) : 0;
+    if (!playgroundApiKey) {
+      toast.error("Please enter your API key");
+      return;
+    }
 
-    setPlaygroundResult(JSON.stringify({
-      ok: true,
-      data: {
-        email: playgroundEmail,
-        valid: isValid,
-        score,
-        disposable: isDisposable,
-        mx_records: isValid,
-        domain: playgroundEmail.split("@")[1] || "",
-        risk_level: score > 70 ? "low" : score > 40 ? "medium" : "high"
-      },
-      credits_used: 1,
-      remaining_credits: 999
-    }, null, 2));
-    setIsLoading(false);
+    setIsLoading(true);
+    setPlaygroundResult(null);
+    setResponseStatus(null);
+    setResponseTime(null);
+
+    const startTime = Date.now();
+
+    try {
+      // Call the real validate-email edge function
+      const { data, error } = await supabase.functions.invoke("validate-email", {
+        body: { email: playgroundEmail },
+        headers: { "X-API-Key": playgroundApiKey }
+      });
+
+      const endTime = Date.now();
+      setResponseTime(endTime - startTime);
+
+      if (error) {
+        // Parse the error to get status code
+        const statusMatch = error.message.match(/(\d{3})/);
+        const status = statusMatch ? parseInt(statusMatch[1]) : 500;
+        setResponseStatus(status);
+        
+        setPlaygroundResult(JSON.stringify({
+          ok: false,
+          error: error.message,
+          status
+        }, null, 2));
+        return;
+      }
+
+      setResponseStatus(200);
+      setPlaygroundResult(JSON.stringify(data, null, 2));
+
+    } catch (err: any) {
+      const endTime = Date.now();
+      setResponseTime(endTime - startTime);
+      setResponseStatus(500);
+      setPlaygroundResult(JSON.stringify({
+        ok: false,
+        error: err.message || "An error occurred"
+      }, null, 2));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: number | null) => {
+    if (!status) return "text-muted-foreground";
+    if (status >= 200 && status < 300) return "text-green-400";
+    if (status >= 400 && status < 500) return "text-yellow-400";
+    return "text-red-400";
   };
 
   return (
@@ -380,7 +427,7 @@ const Docs = () => {
 
             {/* Response Example */}
             <div className="glass-card p-6 rounded-xl border border-border/50">
-              <h3 className="font-display font-semibold text-foreground mb-4">Response</h3>
+              <h3 className="font-display font-semibold text-foreground mb-4">Example Response</h3>
               <pre className="bg-background/80 p-4 rounded-lg border border-border/50 overflow-x-auto">
                 <code className="text-sm font-mono text-green-400 whitespace-pre">
                   {selectedEndpoint.response}
@@ -396,32 +443,79 @@ const Docs = () => {
                   Interactive Playground
                 </h3>
                 
-                <div className="flex gap-4 mb-4">
-                  <input
-                    type="email"
-                    value={playgroundEmail}
-                    onChange={(e) => setPlaygroundEmail(e.target.value)}
-                    placeholder="Enter an email to test"
-                    className="flex-1 px-4 py-2 bg-background/50 border border-border/50 rounded-lg font-mono text-sm text-foreground focus:border-neon-cyan focus:outline-none"
-                  />
-                  <Button variant="neon" onClick={runPlayground} disabled={isLoading}>
-                    {isLoading ? (
-                      "Validating..."
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Test
-                      </>
-                    )}
-                  </Button>
+                <div className="space-y-4 mb-4">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-sm">
+                    <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                    <span className="text-yellow-200">
+                      This playground uses real API calls. Each request consumes 1 credit from your account.
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">API Key (required)</label>
+                    <Input
+                      type="password"
+                      value={playgroundApiKey}
+                      onChange={(e) => setPlaygroundApiKey(e.target.value)}
+                      placeholder="Enter your API key"
+                      className="font-mono text-sm bg-background/50 border-border/50"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="text-sm text-muted-foreground mb-2 block">Email to validate</label>
+                      <Input
+                        type="email"
+                        value={playgroundEmail}
+                        onChange={(e) => setPlaygroundEmail(e.target.value)}
+                        placeholder="Enter an email to test"
+                        className="font-mono text-sm bg-background/50 border-border/50"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button variant="neon" onClick={runPlayground} disabled={isLoading || !playgroundApiKey}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Running...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Run Request
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 {playgroundResult && (
-                  <pre className="bg-background/80 p-4 rounded-lg border border-border/50 overflow-x-auto">
-                    <code className="text-sm font-mono text-green-400 whitespace-pre">
-                      {playgroundResult}
-                    </code>
-                  </pre>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className={`font-mono font-bold ${getStatusColor(responseStatus)}`}>
+                        {responseStatus || "—"}
+                      </span>
+                      {responseTime && (
+                        <>
+                          <span className="text-muted-foreground">|</span>
+                          <span className="text-muted-foreground">Time:</span>
+                          <span className="font-mono text-neon-cyan">{responseTime}ms</span>
+                        </>
+                      )}
+                    </div>
+                    <pre className="bg-background/80 p-4 rounded-lg border border-border/50 overflow-x-auto">
+                      <code className={`text-sm font-mono whitespace-pre ${
+                        responseStatus && responseStatus >= 200 && responseStatus < 300 
+                          ? "text-green-400" 
+                          : "text-red-400"
+                      }`}>
+                        {playgroundResult}
+                      </code>
+                    </pre>
+                  </div>
                 )}
               </div>
             )}

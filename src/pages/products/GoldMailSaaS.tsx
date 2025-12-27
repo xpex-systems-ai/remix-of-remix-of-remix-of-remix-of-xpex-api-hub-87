@@ -89,25 +89,25 @@ const GoldMailSaaS = () => {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-6 animate-fade-in">
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              <CheckCircle className="w-3 h-3 mr-1" /> Production Ready
+              <CheckCircle className="w-3 h-3 mr-1" /> Your Dashboard is Ready
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold">
               <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-500 bg-clip-text text-transparent">
-                GoldMail SaaS
+                GoldMail Dashboard
               </span>
             </h1>
             
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">
-              Enterprise dashboard for operations and marketing teams. 
-              <span className="text-slate-300"> Bulk validation, analytics, credit management, and team collaboration—no code required.</span>
+              The GoldMail Dashboard is your command center for email validation.
+              <span className="text-slate-300"> API + Dashboard together form the complete GoldMail SaaS platform—no separate products, just one integrated solution.</span>
             </p>
 
             <div className="flex justify-center gap-3 flex-wrap pt-4">
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Dashboard</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300">API Access</Badge>
               <Badge variant="outline" className="border-slate-600 text-slate-300">Bulk Validation</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Team Management</Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">Analytics</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300">Usage Analytics</Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300">Credit Management</Badge>
             </div>
 
             <div className="flex justify-center gap-4 pt-4">

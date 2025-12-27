@@ -4,40 +4,17 @@ import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Shield, AlertTriangle, Database, Lock, ArrowRight, Search, CheckCircle2, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Shield, AlertTriangle, Database, Lock, ArrowRight, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const BreachScan = () => {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  const handleScan = async () => {
-    if (!email) return;
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setResult({
-      email,
-      breaches_found: 2,
-      severity: 'medium',
-      breaches: [
-        { name: 'LinkedIn 2021', date: '2021-06-22', records: '700M', data_types: ['Email', 'Name', 'Phone'] },
-        { name: 'Adobe 2013', date: '2013-10-04', records: '153M', data_types: ['Email', 'Password Hash'] },
-      ],
-      recommendations: ['Change passwords', 'Enable 2FA', 'Monitor accounts'],
-    });
-    setLoading(false);
-  };
-
   return (
     <>
       <Helmet>
         <title>BreachScan - Data Breach Detection | XPEX AI</title>
         <meta
           name="description"
-          content="Check if emails appear in known data breaches with severity scoring and exposure analysis."
+          content="Check if emails appear in known data breaches with severity scoring and exposure analysis. Coming soon."
         />
       </Helmet>
 
@@ -51,8 +28,9 @@ const BreachScan = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <Badge variant="outline" className="mb-6 text-primary border-primary/30">
-                Security API
+              <Badge className="mb-6 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                <Clock className="w-3 h-3 mr-1" />
+                Coming Soon
               </Badge>
 
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -64,102 +42,73 @@ const BreachScan = () => {
                 Verifique se emails aparecem em vazamentos de dados conhecidos com scoring de severidade e análise de exposição.
               </p>
 
-              {/* Demo Scan */}
+              {/* Coming Soon Card */}
               <Card className="p-8 bg-card/50 backdrop-blur border-border/50 max-w-2xl mx-auto">
-                <div className="flex gap-4 mb-6">
-                  <Input
-                    type="email"
-                    placeholder="Digite um email para verificar"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleScan} disabled={loading || !email}>
-                    {loading ? (
-                      <>
-                        <Shield className="w-4 h-4 mr-2 animate-spin" /> Escaneando...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" /> Verificar
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {result && (
-                  <div className="text-left space-y-4 p-4 rounded-lg bg-background/50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {result.breaches_found > 0 ? (
-                          <XCircle className="w-5 h-5 text-destructive" />
-                        ) : (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        )}
-                        <span className="font-semibold">{result.email}</span>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={
-                          result.severity === 'low'
-                            ? 'text-green-500 border-green-500/30'
-                            : result.severity === 'medium'
-                            ? 'text-yellow-500 border-yellow-500/30'
-                            : 'text-destructive border-destructive/30'
-                        }
-                      >
-                        {result.breaches_found} vazamentos
-                      </Badge>
-                    </div>
-
-                    {result.breaches.map((breach: any) => (
-                      <div key={breach.name} className="p-3 rounded-lg bg-secondary/50 border border-border/50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium">{breach.name}</span>
-                          <span className="text-xs text-muted-foreground">{breach.date}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {breach.data_types.map((type: string) => (
-                            <Badge key={type} variant="secondary" className="text-xs">
-                              {type}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                <div className="text-center space-y-6">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center">
+                    <Shield className="w-10 h-10 text-yellow-500" />
                   </div>
-                )}
+                  
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">Em Desenvolvimento</h3>
+                    <p className="text-muted-foreground">
+                      Estamos construindo uma solução robusta para detecção de vazamentos de dados.
+                      Cadastre-se para ser notificado quando lançarmos.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button variant="outline" asChild>
+                      <Link to="/auth">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notifique-me no Lançamento
+                      </Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/products/goldmail-validation">
+                        Explorar GoldMail API <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Features */}
+        {/* Planned Features */}
         <section className="py-20 bg-secondary/20">
           <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-center mb-8">Funcionalidades Planejadas</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
                   icon: Database,
                   title: 'Breach Database',
                   description: 'Acesso a bilhões de registros de vazamentos conhecidos.',
+                  status: 'Planejado'
                 },
                 {
                   icon: AlertTriangle,
                   title: 'Risk Assessment',
                   description: 'Scoring de severidade baseado no tipo de dados expostos.',
+                  status: 'Planejado'
                 },
                 {
                   icon: Lock,
                   title: 'Exposure Details',
                   description: 'Detalhes completos sobre quais dados foram comprometidos.',
+                  status: 'Planejado'
                 },
               ].map((feature) => (
                 <Card
                   key={feature.title}
-                  className="p-6 bg-card/50 backdrop-blur border-border/50"
+                  className="p-6 bg-card/50 backdrop-blur border-border/50 relative"
                 >
-                  <feature.icon className="w-10 h-10 text-primary mb-4" />
+                  <Badge variant="outline" className="absolute top-4 right-4 text-xs text-yellow-500 border-yellow-500/30">
+                    {feature.status}
+                  </Badge>
+                  <feature.icon className="w-10 h-10 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </Card>
@@ -168,14 +117,16 @@ const BreachScan = () => {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* CTA */}
         <section className="py-20">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Preço Simples</h2>
-            <p className="text-muted-foreground mb-8">$0.01 por verificação</p>
+            <h2 className="text-3xl font-bold mb-4">Enquanto isso, explore nossa API de validação</h2>
+            <p className="text-muted-foreground mb-8">
+              GoldMail Validator está pronto para produção e disponível agora.
+            </p>
             <Button size="lg" asChild>
-              <Link to="/auth">
-                Começar Agora <ArrowRight className="w-4 h-4 ml-2" />
+              <Link to="/products/goldmail-validation">
+                Conhecer GoldMail <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
           </div>
