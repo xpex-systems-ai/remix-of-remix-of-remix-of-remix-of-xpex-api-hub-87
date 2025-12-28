@@ -12,6 +12,53 @@ yarn add @xpex/goldmail-sdk
 pnpm add @xpex/goldmail-sdk
 ```
 
+## CLI Tool
+
+The SDK includes a command-line interface for email validation.
+
+### Global Installation
+
+```bash
+npm install -g @xpex/goldmail-sdk
+```
+
+### CLI Usage
+
+```bash
+# Set your API key (or use -k flag)
+export GOLDMAIL_API_KEY=your_api_key
+
+# Validate a single email
+goldmail validate user@example.com
+
+# Validate with AI analysis
+goldmail validate-ai suspicious@example.com -v
+
+# Bulk validate emails from file
+goldmail bulk emails.txt -o results.json
+
+# Check bulk job status
+goldmail job job_abc123
+
+# Check your credit balance
+goldmail credits
+
+# Check API health
+goldmail health
+```
+
+### CLI Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--api-key <key>` | `-k` | API key (or set GOLDMAIL_API_KEY) |
+| `--base-url <url>` | `-u` | Custom API base URL |
+| `--verbose` | `-v` | Verbose output with full details |
+| `--output <file>` | `-o` | Output results to file (JSON) |
+| `--format <fmt>` | `-f` | Output format: json, table, csv |
+| `--help` | `-h` | Show help message |
+| `--version` | | Show version number |
+
 ## Quick Start
 
 ```typescript
@@ -41,6 +88,7 @@ console.log(result);
 - 📦 **Bulk Validation** - Process up to 10,000 emails at once
 - 📊 **Health Monitoring** - Check API status
 - 🔒 **TypeScript First** - Full type safety and IntelliSense
+- 💻 **CLI Tool** - Command-line interface for scripts and automation
 
 ## API Reference
 
@@ -164,6 +212,22 @@ try {
     }
   }
 }
+```
+
+## Testing
+
+### Unit Tests
+
+```bash
+npm test
+```
+
+### Integration Tests
+
+Integration tests require a valid API key:
+
+```bash
+GOLDMAIL_TEST_API_KEY=your_test_key npm run test:integration
 ```
 
 ## Examples
