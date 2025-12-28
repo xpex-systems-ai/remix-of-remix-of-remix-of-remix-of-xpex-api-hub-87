@@ -74,25 +74,32 @@ curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/validate-ema
 
 ## 📦 Installation
 
-### Using the SDK (Recommended)
+### SDKs Available
 
-```bash
-npm install @xpex/goldmail-sdk
-```
+| Language | Package | Install Command |
+|----------|---------|-----------------|
+| TypeScript | `@xpex/goldmail-sdk` | `npm install @xpex/goldmail-sdk` |
+| Python | `xpex-goldmail` | `pip install xpex-goldmail` |
+| Go | `goldmail-sdk-go` | `go get github.com/xpex-neural/goldmail-sdk-go` |
 
+### TypeScript
 ```typescript
 import { GoldMailClient } from '@xpex/goldmail-sdk';
-
 const client = new GoldMailClient('your-api-key');
-
-// Single validation
 const result = await client.validate('user@example.com');
+```
 
-// Bulk validation
-const results = await client.validateBulk([
-  'user1@example.com',
-  'user2@example.com'
-]);
+### Python
+```python
+from goldmail import GoldMailClient
+client = GoldMailClient("your-api-key")
+result = client.validate("user@example.com")
+```
+
+### Go
+```go
+client := goldmail.NewClient("your-api-key")
+result, _ := client.Validate(ctx, "user@example.com")
 ```
 
 ### Direct API Integration
