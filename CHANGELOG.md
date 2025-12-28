@@ -76,12 +76,34 @@ The first production-ready release of the XPEX Neural GoldMail platform.
 
 ---
 
+## [1.1.0] - 2025-01-28
+
+### Added
+
+#### SDK Packages
+- **TypeScript SDK** (`@xpex/goldmail-sdk`) - Full-featured npm package with TypeScript types
+- **Python SDK** (`goldmail`) - PyPI package with async support
+- **Go SDK** (`github.com/xpexneural/goldmail-go`) - Native Go implementation
+
+#### CLI Tool
+- Command-line interface for email validation
+- Commands: `validate`, `validate-ai`, `bulk`, `job`, `credits`, `health`
+- Output formats: table, JSON, CSV
+- File output support for bulk operations
+
+#### Testing
+- Unit tests for TypeScript SDK using Vitest
+- Integration tests for API endpoint verification
+- Test coverage for error handling and edge cases
+
+---
+
 ## [Unreleased]
 
 ### Planned
 - BreachScan product launch
 - BridgeScan product launch
-- Multi-language SDK packages (Python, Go, Ruby)
+- Ruby SDK package
 - Enhanced AI validation models
 - Team/organization workspace features
 - Custom webhook event filters
