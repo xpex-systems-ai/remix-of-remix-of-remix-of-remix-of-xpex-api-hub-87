@@ -42,6 +42,7 @@ import GoldMailExtension from "./pages/products/GoldMailExtension";
 import GoldMailAgent from "./pages/products/GoldMailAgent";
 import RequestAccess from "./pages/RequestAccess";
 import Credits from "./pages/Credits";
+import DesignSystem from "./pages/DesignSystem";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 import { Navigate } from "react-router-dom";
@@ -95,6 +96,7 @@ const App = () => (
                   <Route path="/products/goldmail-agent" element={<GoldMailAgent />} />
                   <Route path="/request-access" element={<RequestAccess />} />
                   <Route path="/credits" element={<Credits />} />
+                  <Route path="/design-system" element={<DesignSystem />} />
                   <Route
                     path="/dashboard" 
                     element={
