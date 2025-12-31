@@ -1,48 +1,68 @@
-# XPEX Neural API Reference
+# GoldMail Email Intelligence API Reference
 
-> **Base URL:** `https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1`
+> **Version:** 1.0.0  
+> **Base URL:** `https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1`  
+> **OpenAPI Spec:** [`/openapi.json`](./public/openapi.json)
+
+Enterprise-grade email validation and intelligence API with credit-based billing.
+
+---
 
 ## Authentication
 
-All API endpoints (except `/health`) require authentication via API key.
+All API requests (except `/health`) require authentication via API key.
 
 ```
-Header: x-api-key: YOUR_API_KEY
+X-API-Key: your_api_key_here
 ```
 
-API keys can be created and managed in the [Dashboard](/dashboard).
+Obtain your API key from **Dashboard → API Keys**.
+
+---
+
+## Rate Limits
+
+| Scope | Limit | Window |
+|-------|-------|--------|
+| Per API Key | 100 requests | 1 minute |
+| Per IP | 30 requests | 1 minute |
+
+Rate limit headers are included in every response:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1705320000
+```
 
 ---
 
 ## Endpoints
 
-### Email Validation
+### POST /validate-email
 
-#### `POST /validate-email`
+Standard email validation with format, deliverability, and risk checks.
 
-Basic email validation with format checks, disposable detection, and MX validation.
+**Credits:** 1 per request
 
-**Headers:**
-| Header | Required | Description |
-|--------|----------|-------------|
-| `x-api-key` | Yes | Your API key |
-| `Content-Type` | Yes | `application/json` |
+#### Request
 
-**Request Body:**
-```json
-{
-  "email": "user@example.com"
-}
+```bash
+curl -X POST https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/validate-email \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"email": "user@example.com"}'
 ```
 
-**Response (200 OK):**
+#### Response
+
 ```json
 {
   "ok": true,
   "data": {
-    "email": "user@example.com",
+    "email": "user@gmail.com",
     "valid": true,
-    "score": 100,
+    "score": 95,
     "checks": {
       "format_valid": true,
       "is_disposable": false,
@@ -54,207 +74,152 @@ Basic email validation with format checks, disposable detection, and MX validati
   },
   "credits_used": 1,
   "remaining_credits": 99,
-  "response_time_ms": 45,
+  "response_time_ms": 145,
   "rate_limit": {
-    "remaining": 99,
-    "reset_at": "2025-01-01T00:01:00.000Z"
+    "remaining": 98,
+    "reset_at": "2024-01-15T12:00:00Z"
   }
 }
 ```
 
-**Rate Limits:**
-- 100 requests/minute per API key
-- 30 requests/minute per IP
-
-**Credit Cost:** 1 credit per validation
-
 ---
 
-#### `POST /validate-email-ai`
+### POST /validate-email-ai
 
-AI-powered email validation with deep analysis, fraud detection, and recommendations.
+AI-powered email validation with behavioral inference and fraud detection.
 
-**Headers:**
-| Header | Required | Description |
-|--------|----------|-------------|
-| `x-api-key` | Yes | Your API key |
-| `Content-Type` | Yes | `application/json` |
+**Credits:** 1 per request
 
-**Request Body:**
-```json
-{
-  "email": "user@example.com"
-}
+#### Request
+
+```bash
+curl -X POST https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/validate-email-ai \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"email": "user@example.com"}'
 ```
 
-**Response (200 OK):**
+#### Response
+
 ```json
 {
   "ok": true,
   "data": {
-    "email": "user@example.com",
+    "email": "user@gmail.com",
     "valid": true,
-    "score": 85,
+    "score": 92,
     "disposable": false,
     "mx_found": true,
     "format_valid": true,
-    "domain": "example.com",
+    "domain": "gmail.com",
     "risk_level": "low",
-    "risk_score": 15,
+    "risk_score": 8,
     "fraud_indicators": [],
     "typo_detected": false,
     "suggested_correction": null,
-    "domain_analysis": "Legitimate corporate domain",
+    "domain_analysis": "Gmail is a major email provider with excellent deliverability",
     "recommendations": ["Safe to use for transactional emails"],
-    "response_time_ms": 892,
+    "response_time_ms": 850,
     "ai_powered": true
   },
   "credits_used": 1,
   "remaining_credits": 98,
   "rate_limit": {
     "remaining": 58,
-    "reset_at": "2025-01-01T00:01:00.000Z"
+    "reset_at": "2024-01-15T12:00:00Z"
   }
 }
 ```
 
-**Rate Limits:**
-- 60 requests/minute per API key
-- 20 requests/minute per IP
-
-**Credit Cost:** 1 credit per validation
-
 ---
 
-#### `POST /bulk-validate-email`
+### POST /bulk-validate-email
 
-Bulk email validation for processing large email lists.
+Submit a batch of emails for asynchronous validation.
 
-**Authentication:** Session-based (requires logged-in user)
+**Credits:** 1 per email (dynamic)
 
-**Headers:**
-| Header | Required | Description |
-|--------|----------|-------------|
-| `Authorization` | Yes | `Bearer {session_token}` |
-| `Content-Type` | Yes | `application/json` |
+**Authentication:** Session-based (requires logged-in user via `Authorization: Bearer {token}`)
 
-**Request Body (Create Job):**
-```json
-{
-  "emails": ["email1@example.com", "email2@test.com"],
-  "fileName": "my_list.csv",
-  "scheduledAt": "2025-01-02T10:00:00.000Z"
-}
+#### Request
+
+```bash
+curl -X POST https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/bulk-validate-email \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "emails": ["user1@example.com", "user2@example.com"],
+    "fileName": "contacts.csv"
+  }'
 ```
 
-**Request Body (Process Job):**
-```json
-{
-  "jobId": "uuid-of-created-job",
-  "emails": ["email1@example.com", "email2@test.com"],
-  "fileName": "my_list.csv"
-}
-```
+#### Response
 
-**Response (200 OK - Job Created):**
 ```json
 {
-  "success": true,
+  "ok": true,
   "job_id": "550e8400-e29b-41d4-a716-446655440000",
-  "total_emails": 1000,
-  "scheduled": false,
-  "message": "Job created. Call again with jobId to process."
+  "status": "pending",
+  "total_emails": 2,
+  "message": "Bulk validation job created"
 }
 ```
-
-**Response (200 OK - Job Completed):**
-```json
-{
-  "success": true,
-  "processed": 1000,
-  "valid": 850,
-  "invalid": 150,
-  "credits_used": 1000
-}
-```
-
-**Credit Cost:** 1 credit per email validated
 
 ---
 
-### Health & Status
+### GET /health
 
-#### `GET /health`
+Health check endpoint. **No authentication required.**
 
-Check system health and service status. **No authentication required.**
+#### Request
 
-**Response (200 OK):**
+```bash
+curl https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/health
+```
+
+#### Response
+
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-01-01T00:00:00.000Z",
   "version": "1.0.0",
-  "uptime_seconds": 86400,
-  "services": [
-    {
-      "name": "database",
-      "status": "healthy",
-      "latency_ms": 23,
-      "message": "Connected",
-      "last_checked": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "name": "stripe",
-      "status": "healthy",
-      "latency_ms": 156,
-      "message": "Connected",
-      "last_checked": "2025-01-01T00:00:00.000Z"
-    }
-  ],
-  "summary": {
-    "total": 5,
-    "healthy": 5,
-    "degraded": 0,
-    "unhealthy": 0
-  }
+  "timestamp": "2024-01-15T12:00:00Z",
+  "services": {
+    "api": "operational",
+    "database": "operational",
+    "validation": "operational"
+  },
+  "response_time_ms": 12
 }
 ```
 
-**Status Codes:**
-- `200` - Healthy or Degraded
-- `503` - Unhealthy (one or more critical services down)
-
 ---
 
-### Billing
-
-#### `POST /purchase-credits`
+### POST /purchase-credits
 
 Initiate a Stripe checkout session for purchasing credits.
 
 **Authentication:** Session-based (requires logged-in user)
 
-**Headers:**
-| Header | Required | Description |
-|--------|----------|-------------|
-| `Authorization` | Yes | `Bearer {session_token}` |
-| `Content-Type` | Yes | `application/json` |
+#### Request
 
-**Request Body:**
-```json
-{
-  "package": "starter"
-}
+```bash
+curl -X POST https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/purchase-credits \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"package": "starter"}'
 ```
 
 **Available Packages:**
+
 | Package | Credits | Price |
 |---------|---------|-------|
 | `starter` | 2,000 | $5 |
 | `growth` | 20,000 | $39 |
 | `scale` | 100,000 | $149 |
 
-**Response (200 OK):**
+#### Response
+
 ```json
 {
   "url": "https://checkout.stripe.com/..."
@@ -263,88 +228,82 @@ Initiate a Stripe checkout session for purchasing credits.
 
 ---
 
-## Error Responses
+## Error Codes
 
-All endpoints return consistent error responses:
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `MISSING_API_KEY` | 401 | No API key provided in headers |
+| `INVALID_API_KEY` | 403 | API key is invalid or inactive |
+| `INSUFFICIENT_CREDITS` | 402 | Not enough credits for the request |
+| `RATE_LIMIT_EXCEEDED` | 429 | Rate limit exceeded |
+| `MISSING_EMAIL` | 400 | Email field is required |
+| `INVALID_EMAIL` | 400 | Email format is invalid |
+| `INTERNAL_ERROR` | 500 | Server-side error |
+
+### Error Response Format
 
 ```json
 {
   "ok": false,
-  "error": "Error message",
+  "error": "Human-readable error message",
   "code": "ERROR_CODE"
 }
 ```
 
-### Error Codes
+---
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `MISSING_API_KEY` | 401 | No API key provided |
-| `INVALID_API_KEY` | 403 | API key not found or inactive |
-| `INSUFFICIENT_CREDITS` | 402 | Not enough credits |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `MISSING_EMAIL` | 400 | Email field not provided |
-| `INTERNAL_ERROR` | 500 | Server error |
+## Risk Levels
 
-### Rate Limit Headers
-
-All rate-limited endpoints return these headers:
-
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1704067260
-```
+| Level | Score Range | Description |
+|-------|-------------|-------------|
+| `low` | 80-100 | Safe to use |
+| `medium` | 50-79 | Use with caution |
+| `high` | 20-49 | High risk, not recommended |
+| `critical` | 0-19 | Do not use |
 
 ---
 
-## Code Examples
+## SDKs
 
-### cURL
+Official SDKs are available for:
+
+### TypeScript/JavaScript
 
 ```bash
-curl -X POST \
-  https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/validate-email \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
-  -d '{"email": "test@example.com"}'
+npm install @xpex/goldmail-sdk
 ```
 
-### JavaScript
+```typescript
+import { GoldMailClient } from '@xpex/goldmail-sdk';
 
-```javascript
-const response = await fetch(
-  'https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/validate-email',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': 'YOUR_API_KEY',
-    },
-    body: JSON.stringify({ email: 'test@example.com' }),
-  }
-);
-
-const result = await response.json();
-console.log(result.data.valid); // true or false
+const client = new GoldMailClient('your_api_key');
+const result = await client.validate('user@example.com');
 ```
 
 ### Python
 
+```bash
+pip install goldmail-sdk
+```
+
 ```python
-import requests
+from goldmail import GoldMailClient
 
-response = requests.post(
-    'https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/validate-email',
-    headers={
-        'Content-Type': 'application/json',
-        'x-api-key': 'YOUR_API_KEY',
-    },
-    json={'email': 'test@example.com'}
-)
+client = GoldMailClient('your_api_key')
+result = client.validate('user@example.com')
+```
 
-result = response.json()
-print(result['data']['valid'])
+### Go
+
+```bash
+go get github.com/xpex/goldmail-go
+```
+
+```go
+import "github.com/xpex/goldmail-go"
+
+client := goldmail.NewClient("your_api_key")
+result, err := client.Validate(ctx, "user@example.com")
 ```
 
 ---
@@ -396,7 +355,6 @@ const isValid = signature === expectedSignature;
 
 ## Support
 
-- **Documentation:** [/docs](/docs)
-- **Dashboard:** [/dashboard](/dashboard)
-- **Contact:** [/contact](/contact)
-- **Status Page:** [/status](/status)
+- **Email:** api@xpexneural.com
+- **Documentation:** https://xpexneural.com/docs
+- **Status:** https://xpexneural.com/status
