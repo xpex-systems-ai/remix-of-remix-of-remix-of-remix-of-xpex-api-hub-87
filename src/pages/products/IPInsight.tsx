@@ -4,42 +4,17 @@ import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Globe, Shield, MapPin, Wifi, ArrowRight, Search, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { Globe, Shield, MapPin, Wifi, ArrowRight, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const IPInsight = () => {
-  const [ip, setIp] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  const handleLookup = async () => {
-    if (!ip) return;
-    setLoading(true);
-    // Simulated lookup
-    await new Promise((r) => setTimeout(r, 1500));
-    setResult({
-      ip,
-      country: 'Brasil',
-      city: 'São Paulo',
-      isp: 'Vivo Fibra',
-      risk_level: 'low',
-      risk_score: 12,
-      threats: [],
-      is_vpn: false,
-      is_proxy: false,
-    });
-    setLoading(false);
-  };
-
   return (
     <>
       <Helmet>
-        <title>IP Insight - Advanced IP Intelligence | XPEX AI</title>
+        <title>IP Insight - Advanced IP Intelligence | XPEX Neural</title>
         <meta
           name="description"
-          content="Informações avançadas sobre IPs, geolocalização e reputação de rede."
+          content="Advanced IP information, geolocation, and network reputation analysis. Coming soon to XPEX Neural."
         />
       </Helmet>
 
@@ -53,8 +28,9 @@ const IPInsight = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <Badge variant="outline" className="mb-6 text-yellow-500 border-yellow-500/30">
-                Beta
+              <Badge className="mb-6 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                <Clock className="w-3 h-3 mr-1" />
+                Coming Soon
               </Badge>
 
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -63,110 +39,76 @@ const IPInsight = () => {
               </h1>
 
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                Inteligência avançada de IP com geolocalização, detecção de ameaças e análise de
-                reputação de rede.
+                Advanced IP intelligence with geolocation, threat detection, and network reputation analysis.
               </p>
 
-              {/* Demo Lookup */}
+              {/* Coming Soon Card */}
               <Card className="p-8 bg-card/50 backdrop-blur border-border/50 max-w-2xl mx-auto">
-                <div className="flex gap-4 mb-6">
-                  <Input
-                    placeholder="Digite um IP (ex: 8.8.8.8)"
-                    value={ip}
-                    onChange={(e) => setIp(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleLookup} disabled={loading || !ip}>
-                    {loading ? (
-                      <>
-                        <Globe className="w-4 h-4 mr-2 animate-spin" /> Analisando...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" /> Analisar
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {result && (
-                  <div className="text-left space-y-4 p-4 rounded-lg bg-background/50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="font-semibold">IP: {result.ip}</span>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={
-                          result.risk_level === 'low'
-                            ? 'text-green-500 border-green-500/30'
-                            : 'text-red-500 border-red-500/30'
-                        }
-                      >
-                        Risco: {result.risk_score}%
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="p-3 rounded-lg bg-secondary/50">
-                        <MapPin className="w-4 h-4 text-primary mb-1" />
-                        <div className="text-sm font-medium">{result.city}</div>
-                        <div className="text-xs text-muted-foreground">{result.country}</div>
-                      </div>
-                      <div className="p-3 rounded-lg bg-secondary/50">
-                        <Wifi className="w-4 h-4 text-primary mb-1" />
-                        <div className="text-sm font-medium">{result.isp}</div>
-                        <div className="text-xs text-muted-foreground">ISP</div>
-                      </div>
-                      <div className="p-3 rounded-lg bg-secondary/50">
-                        <Shield className="w-4 h-4 text-green-500 mb-1" />
-                        <div className="text-sm font-medium">
-                          {result.is_vpn ? 'Sim' : 'Não'}
-                        </div>
-                        <div className="text-xs text-muted-foreground">VPN</div>
-                      </div>
-                      <div className="p-3 rounded-lg bg-secondary/50">
-                        <AlertTriangle className="w-4 h-4 text-green-500 mb-1" />
-                        <div className="text-sm font-medium">
-                          {result.threats.length || 'Nenhuma'}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Ameaças</div>
-                      </div>
-                    </div>
+                <div className="text-center space-y-6">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center">
+                    <Globe className="w-10 h-10 text-yellow-500" />
                   </div>
-                )}
+                  
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">In Development</h3>
+                    <p className="text-muted-foreground">
+                      We're building a robust IP intelligence solution with geolocation, VPN/proxy detection, and threat scoring.
+                      Join the waitlist to be notified at launch.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button variant="outline" asChild>
+                      <Link to="/auth">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notify Me at Launch
+                      </Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/products/goldmail-validation">
+                        Explore GoldMail API <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Features */}
+        {/* Planned Features */}
         <section className="py-20 bg-secondary/20">
           <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-center mb-8">Planned Features</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
                   icon: MapPin,
-                  title: 'Geolocalização Precisa',
-                  description: 'Localização em tempo real com cidade, região e país.',
+                  title: 'Precise Geolocation',
+                  description: 'Real-time location with city, region, and country data.',
+                  status: 'Planned'
                 },
                 {
                   icon: Shield,
                   title: 'Threat Detection',
-                  description: 'Detecção de VPN, proxy, tor e atividades maliciosas.',
+                  description: 'VPN, proxy, tor, and malicious activity detection.',
+                  status: 'Planned'
                 },
                 {
-                  icon: Globe,
+                  icon: Wifi,
                   title: 'Network Intelligence',
-                  description: 'Informações de ISP, ASN e reputação de rede.',
+                  description: 'ISP information, ASN data, and network reputation.',
+                  status: 'Planned'
                 },
               ].map((feature) => (
                 <Card
                   key={feature.title}
-                  className="p-6 bg-card/50 backdrop-blur border-border/50"
+                  className="p-6 bg-card/50 backdrop-blur border-border/50 relative"
                 >
-                  <feature.icon className="w-10 h-10 text-primary mb-4" />
+                  <Badge variant="outline" className="absolute top-4 right-4 text-xs text-yellow-500 border-yellow-500/30">
+                    {feature.status}
+                  </Badge>
+                  <feature.icon className="w-10 h-10 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </Card>
@@ -178,10 +120,13 @@ const IPInsight = () => {
         {/* CTA */}
         <section className="py-20">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-6">Proteja seu negócio com IP Intelligence</h2>
+            <h2 className="text-3xl font-bold mb-4">Meanwhile, explore our validation API</h2>
+            <p className="text-muted-foreground mb-8">
+              GoldMail Validator is production-ready and available now.
+            </p>
             <Button size="lg" asChild>
-              <Link to="/auth">
-                Começar Agora <ArrowRight className="w-4 h-4 ml-2" />
+              <Link to="/products/goldmail-validation">
+                Explore GoldMail <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
           </div>

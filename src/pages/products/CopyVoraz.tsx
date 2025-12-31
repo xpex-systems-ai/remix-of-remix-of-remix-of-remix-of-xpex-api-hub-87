@@ -4,42 +4,17 @@ import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Zap, Sparkles, Target, TrendingUp, ArrowRight, Copy, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { Zap, Sparkles, Target, TrendingUp, ArrowRight, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const CopyVoraz = () => {
-  const [prompt, setPrompt] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
-  const [copied, setCopied] = useState<number | null>(null);
-
-  const handleGenerate = async () => {
-    if (!prompt) return;
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setResults([
-      '🚀 Descubra o segredo que 97% dos empreendedores não conhecem...',
-      '⚡ Pare de perder dinheiro! Esta estratégia triplicou meu faturamento em 30 dias',
-      '🔥 [URGENTE] Vagas limitadas para o método que está revolucionando o mercado',
-    ]);
-    setLoading(false);
-  };
-
-  const handleCopy = (index: number, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(index);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
   return (
     <>
       <Helmet>
-        <title>CopyVoraz - AI Viral Copy Generator | XPEX AI</title>
+        <title>CopyVoraz - AI Viral Copy Generator | XPEX Neural</title>
         <meta
           name="description"
-          content="AI-powered viral copy generation for marketing campaigns. Generate headlines that convert."
+          content="AI-powered viral copy generation for marketing campaigns. Coming soon to XPEX Neural."
         />
       </Helmet>
 
@@ -53,8 +28,9 @@ const CopyVoraz = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <Badge variant="outline" className="mb-6 text-primary border-primary/30">
-                AI Copywriting
+              <Badge className="mb-6 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                <Clock className="w-3 h-3 mr-1" />
+                Coming Soon
               </Badge>
 
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -63,84 +39,76 @@ const CopyVoraz = () => {
               </h1>
 
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                Geração de copy viral com IA para campanhas de marketing. Headlines que convertem em segundos.
+                AI-powered viral copy generation for marketing campaigns. Headlines that convert in seconds.
               </p>
 
-              {/* Demo Generator */}
+              {/* Coming Soon Card */}
               <Card className="p-8 bg-card/50 backdrop-blur border-border/50 max-w-2xl mx-auto">
-                <Textarea
-                  placeholder="Descreva seu produto ou serviço... (ex: Curso de marketing digital para iniciantes)"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="mb-4 min-h-[100px]"
-                />
-                <Button onClick={handleGenerate} disabled={loading || !prompt} className="w-full">
-                  {loading ? (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2 animate-pulse" /> Gerando copies virais...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4 mr-2" /> Gerar Copies
-                    </>
-                  )}
-                </Button>
-
-                {results.length > 0 && (
-                  <div className="mt-6 space-y-3">
-                    {results.map((text, index) => (
-                      <div
-                        key={index}
-                        className="p-4 rounded-lg bg-background/50 border border-border/50 text-left flex items-start justify-between gap-4"
-                      >
-                        <p className="text-sm">{text}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopy(index, text)}
-                          className="shrink-0"
-                        >
-                          {copied === index ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    ))}
+                <div className="text-center space-y-6">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center">
+                    <Zap className="w-10 h-10 text-yellow-500" />
                   </div>
-                )}
+                  
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">In Development</h3>
+                    <p className="text-muted-foreground">
+                      We're building an AI copywriting engine that generates viral headlines optimized for engagement and conversion.
+                      Join the waitlist to be notified at launch.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button variant="outline" asChild>
+                      <Link to="/auth">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notify Me at Launch
+                      </Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/products/goldmail-validation">
+                        Explore GoldMail API <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Features */}
+        {/* Planned Features */}
         <section className="py-20 bg-secondary/20">
           <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-center mb-8">Planned Features</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
                   icon: Sparkles,
                   title: 'Viral Headlines',
-                  description: 'Headlines otimizadas para máximo engajamento e conversão.',
+                  description: 'Headlines optimized for maximum engagement and conversion.',
+                  status: 'Planned'
                 },
                 {
                   icon: Target,
                   title: 'Multiple Tones',
-                  description: 'Adapte o tom para diferentes audiências e plataformas.',
+                  description: 'Adapt tone for different audiences and platforms.',
+                  status: 'Planned'
                 },
                 {
                   icon: TrendingUp,
                   title: 'A/B Variants',
-                  description: 'Múltiplas variações para testar e otimizar resultados.',
+                  description: 'Multiple variations for testing and optimization.',
+                  status: 'Planned'
                 },
               ].map((feature) => (
                 <Card
                   key={feature.title}
-                  className="p-6 bg-card/50 backdrop-blur border-border/50"
+                  className="p-6 bg-card/50 backdrop-blur border-border/50 relative"
                 >
-                  <feature.icon className="w-10 h-10 text-primary mb-4" />
+                  <Badge variant="outline" className="absolute top-4 right-4 text-xs text-yellow-500 border-yellow-500/30">
+                    {feature.status}
+                  </Badge>
+                  <feature.icon className="w-10 h-10 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </Card>
@@ -149,14 +117,16 @@ const CopyVoraz = () => {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* CTA */}
         <section className="py-20">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Preço Simples</h2>
-            <p className="text-muted-foreground mb-8">$0.03 por geração</p>
+            <h2 className="text-3xl font-bold mb-4">Meanwhile, explore our validation API</h2>
+            <p className="text-muted-foreground mb-8">
+              GoldMail Validator is production-ready and available now.
+            </p>
             <Button size="lg" asChild>
-              <Link to="/auth">
-                Começar Agora <ArrowRight className="w-4 h-4 ml-2" />
+              <Link to="/products/goldmail-validation">
+                Explore GoldMail <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
           </div>

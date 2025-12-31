@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Search, Star, Zap, Shield, Globe, Database, Link2, Mail } from "lucide-react";
+import { Search, Star, Zap, Shield, Globe, Database, Link2, Mail, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 
-const apis = [
+type ProductStatus = "live" | "coming-soon";
+
+interface API {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ElementType;
+  category: string;
+  pricing: string;
+  rating: number;
+  calls: string;
+  featured: boolean;
+  features: string[];
+  href: string;
+  status: ProductStatus;
+}
+
+const apis: API[] = [
   {
     id: "gold-email-validator",
     name: "Gold Email Validator",
@@ -20,7 +37,8 @@ const apis = [
     calls: "2.5M+",
     featured: true,
     features: ["MX Check", "AI Risk Score", "Disposable Detection", "<50ms Latency"],
-    href: "/products/gold-email-validator",
+    href: "/products/goldmail-validation",
+    status: "live",
   },
   {
     id: "breach-scan",
@@ -29,11 +47,12 @@ const apis = [
     icon: Shield,
     category: "Security",
     pricing: "$0.01/call",
-    rating: 4.8,
-    calls: "500K+",
+    rating: 0,
+    calls: "—",
     featured: false,
     features: ["Breach Database", "Risk Assessment", "Exposure Details"],
     href: "/products/breach-scan",
+    status: "coming-soon",
   },
   {
     id: "ip-insight",
@@ -42,11 +61,12 @@ const apis = [
     icon: Globe,
     category: "Security",
     pricing: "$0.008/call",
-    rating: 4.7,
-    calls: "1.2M+",
+    rating: 0,
+    calls: "—",
     featured: false,
     features: ["Geolocation", "VPN Detection", "Threat Score"],
     href: "/products/ip-insight",
+    status: "coming-soon",
   },
   {
     id: "copy-voraz",
@@ -55,11 +75,12 @@ const apis = [
     icon: Zap,
     category: "AI",
     pricing: "$0.03/call",
-    rating: 4.6,
-    calls: "200K+",
+    rating: 0,
+    calls: "—",
     featured: false,
     features: ["Viral Headlines", "Multiple Tones", "A/B Variants"],
     href: "/products/copy-voraz",
+    status: "coming-soon",
   },
   {
     id: "extrair-produtos",
@@ -68,11 +89,12 @@ const apis = [
     icon: Database,
     category: "Data",
     pricing: "$0.005/call",
-    rating: 4.5,
-    calls: "800K+",
+    rating: 0,
+    calls: "—",
     featured: false,
     features: ["Multi-marketplace", "Price Tracking", "Structured Data"],
     href: "/products/extrair-produtos",
+    status: "coming-soon",
   },
   {
     id: "link-magic",
@@ -81,17 +103,37 @@ const apis = [
     icon: Link2,
     category: "Utility",
     pricing: "$0.005/call",
-    rating: 4.4,
-    calls: "600K+",
+    rating: 0,
+    calls: "—",
     featured: false,
     features: ["Health Check", "Redirect Chain", "SSL Validation"],
     href: "/products/link-magic",
+    status: "coming-soon",
   },
 ];
 
 const categories = ["All", "Validation", "Security", "AI", "Data", "Utility"];
 
+const StatusBadge = ({ status }: { status: ProductStatus }) => {
+  if (status === "live") {
+    return (
+      <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
+        Live
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="text-muted-foreground border-border">
+      <Clock className="w-3 h-3 mr-1" />
+      Coming Soon
+    </Badge>
+  );
+};
+
 const Marketplace = () => {
+  const liveApis = apis.filter(a => a.status === "live");
+  const comingSoonApis = apis.filter(a => a.status === "coming-soon");
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -135,8 +177,8 @@ const Marketplace = () => {
           </div>
         </section>
 
-        {/* Featured API */}
-        {apis.filter((a) => a.featured).map((api) => (
+        {/* Featured API - Only Live Products */}
+        {liveApis.filter((a) => a.featured).map((api) => (
           <section key={api.id} className="container mx-auto px-4 mb-12">
             <Card className="p-8 bg-gradient-to-br from-primary/10 via-card/50 to-purple-500/10 border-primary/30">
               <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -147,6 +189,7 @@ const Marketplace = () => {
                   <div className="flex items-center gap-3 mb-2">
                     <h2 className="text-2xl font-bold">{api.name}</h2>
                     <Badge className="bg-primary/20 text-primary border-primary/30">Featured</Badge>
+                    <StatusBadge status={api.status} />
                   </div>
                   <p className="text-muted-foreground mb-4">{api.description}</p>
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -166,18 +209,22 @@ const Marketplace = () => {
                   </div>
                 </div>
                 <Button asChild size="lg">
-                  <Link to={api.href || `/products/${api.id}`}>Try Now</Link>
+                  <Link to={api.href}>Get Started</Link>
                 </Button>
               </div>
             </Card>
           </section>
         ))}
 
-        {/* API Grid */}
-        <section className="container mx-auto px-4">
+        {/* Live APIs Section */}
+        <section className="container mx-auto px-4 mb-12">
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-xl font-bold">Available Now</h2>
+            <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Core Platform</Badge>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {apis.filter((a) => !a.featured).map((api) => (
-              <Link key={api.id} to={api.href || `/products/${api.id}`}>
+            {liveApis.filter((a) => !a.featured).map((api) => (
+              <Link key={api.id} to={api.href}>
                 <Card
                   className="p-6 bg-card/50 backdrop-blur border-border/50 hover:border-primary/50 transition-all group h-full"
                 >
@@ -186,7 +233,10 @@ const Marketplace = () => {
                       <api.icon className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold mb-1">{api.name}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold">{api.name}</h3>
+                        <StatusBadge status={api.status} />
+                      </div>
                       <Badge variant="outline" className="text-xs">
                         {api.category}
                       </Badge>
@@ -199,6 +249,46 @@ const Marketplace = () => {
                       {api.rating}
                     </span>
                     <span className="text-primary font-medium">{api.pricing}</span>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Coming Soon APIs Section */}
+        <section className="container mx-auto px-4">
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-xl font-bold text-muted-foreground">Coming Soon</h2>
+            <Badge variant="outline" className="text-muted-foreground border-border">
+              <Clock className="w-3 h-3 mr-1" />
+              Roadmap
+            </Badge>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {comingSoonApis.map((api) => (
+              <Link key={api.id} to={api.href}>
+                <Card
+                  className="p-6 bg-card/30 backdrop-blur border-border/30 hover:border-border/50 transition-all group h-full opacity-70 hover:opacity-90"
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-3 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors">
+                      <api.icon className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-muted-foreground">{api.name}</h3>
+                      </div>
+                      <Badge variant="outline" className="text-xs text-muted-foreground border-border/50">
+                        {api.category}
+                      </Badge>
+                    </div>
+                    <StatusBadge status={api.status} />
+                  </div>
+                  <p className="text-muted-foreground/70 text-sm mb-4 line-clamp-2">{api.description}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground/50">Not yet rated</span>
+                    <span className="text-muted-foreground font-medium">{api.pricing}</span>
                   </div>
                 </Card>
               </Link>
