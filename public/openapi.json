@@ -1,0 +1,675 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GoldMail Email Intelligence API",
+    "description": "Enterprise-grade email validation and intelligence API with credit-based billing. Provides real-time email verification, AI-powered fraud detection, and bulk validation capabilities.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XPEX Neural API Support",
+      "email": "api@xpexneural.com",
+      "url": "https://xpexneural.com/support"
+    },
+    "license": {
+      "name": "Commercial",
+      "url": "https://xpexneural.com/terms"
+    },
+    "x-logo": {
+      "url": "https://xpexneural.com/logo.png"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1",
+      "description": "Production API"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Validation",
+      "description": "Email validation endpoints"
+    },
+    {
+      "name": "Bulk Operations",
+      "description": "Batch email validation"
+    },
+    {
+      "name": "Account",
+      "description": "Account and billing information"
+    },
+    {
+      "name": "System",
+      "description": "Health and status endpoints"
+    }
+  ],
+  "paths": {
+    "/validate-email": {
+      "post": {
+        "operationId": "validateEmail",
+        "summary": "Validate Email",
+        "description": "Validates a single email address for format, deliverability, and risk assessment. Costs 1 credit per request.",
+        "tags": ["Validation"],
+        "x-credits-cost": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailValidationRequest"
+              },
+              "example": {
+                "email": "user@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "data": {
+                    "email": "user@gmail.com",
+                    "valid": true,
+                    "score": 95,
+                    "checks": {
+                      "format_valid": true,
+                      "is_disposable": false,
+                      "mx_valid": true,
+                      "has_typo": false
+                    },
+                    "suggestion": null,
+                    "risk_level": "low"
+                  },
+                  "credits_used": 1,
+                  "remaining_credits": 99,
+                  "response_time_ms": 145,
+                  "rate_limit": {
+                    "remaining": 98,
+                    "reset_at": "2024-01-15T12:00:00Z"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Request limit per window"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Remaining requests in window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when window resets"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing or invalid email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "ok": false,
+                  "error": "Email is required",
+                  "code": "MISSING_EMAIL"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "ok": false,
+                  "error": "API key required",
+                  "code": "MISSING_API_KEY"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required - Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsufficientCreditsError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "ok": false,
+                  "error": "Invalid or inactive API key",
+                  "code": "INVALID_API_KEY"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validate-email-ai": {
+      "post": {
+        "operationId": "validateEmailAI",
+        "summary": "AI-Powered Email Validation",
+        "description": "Advanced email validation using AI for behavioral inference, fraud detection, and typosquatting analysis. Costs 1 credit per request.",
+        "tags": ["Validation"],
+        "x-credits-cost": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailValidationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful AI validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIValidationResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "data": {
+                    "email": "user@gmail.com",
+                    "valid": true,
+                    "score": 92,
+                    "disposable": false,
+                    "mx_found": true,
+                    "format_valid": true,
+                    "domain": "gmail.com",
+                    "risk_level": "low",
+                    "risk_score": 8,
+                    "fraud_indicators": [],
+                    "typo_detected": false,
+                    "suggested_correction": null,
+                    "domain_analysis": "Gmail is a major email provider with excellent deliverability",
+                    "recommendations": ["Safe to use for transactional emails"],
+                    "response_time_ms": 850,
+                    "ai_powered": true
+                  },
+                  "credits_used": 1,
+                  "remaining_credits": 98,
+                  "rate_limit": {
+                    "remaining": 58,
+                    "reset_at": "2024-01-15T12:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "$ref": "#/components/responses/PaymentRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/bulk-validate-email": {
+      "post": {
+        "operationId": "bulkValidateEmail",
+        "summary": "Bulk Email Validation",
+        "description": "Submit a batch of emails for validation. Returns a job ID for tracking. Credits are deducted based on the number of emails (1 credit per email).",
+        "tags": ["Bulk Operations"],
+        "x-credits-cost": "dynamic",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkValidationRequest"
+              },
+              "example": {
+                "emails": ["user1@example.com", "user2@example.com"],
+                "fileName": "contacts.csv",
+                "scheduledAt": null
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkValidationResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "$ref": "#/components/responses/PaymentRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health Check",
+        "description": "Returns the current health status of the API and its services.",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "System health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "version": "1.0.0",
+                  "timestamp": "2024-01-15T12:00:00Z",
+                  "services": {
+                    "api": "operational",
+                    "database": "operational",
+                    "validation": "operational"
+                  },
+                  "response_time_ms": 12
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authentication. Obtain from Dashboard > API Keys."
+      }
+    },
+    "schemas": {
+      "EmailValidationRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The email address to validate",
+            "example": "user@example.com"
+          }
+        }
+      },
+      "ValidationResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Request success status"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ValidationResult"
+          },
+          "credits_used": {
+            "type": "integer",
+            "description": "Credits consumed by this request"
+          },
+          "remaining_credits": {
+            "type": "integer",
+            "description": "Remaining credit balance"
+          },
+          "response_time_ms": {
+            "type": "integer",
+            "description": "Response time in milliseconds"
+          },
+          "rate_limit": {
+            "$ref": "#/components/schemas/RateLimitInfo"
+          }
+        }
+      },
+      "ValidationResult": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The validated email address"
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Whether the email is considered valid"
+          },
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Validation confidence score (0-100)"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/ValidationChecks"
+          },
+          "suggestion": {
+            "type": "string",
+            "nullable": true,
+            "description": "Suggested correction for typos"
+          },
+          "risk_level": {
+            "$ref": "#/components/schemas/RiskLevel"
+          }
+        }
+      },
+      "ValidationChecks": {
+        "type": "object",
+        "properties": {
+          "format_valid": {
+            "type": "boolean",
+            "description": "Email format is syntactically correct"
+          },
+          "is_disposable": {
+            "type": "boolean",
+            "description": "Email uses a disposable domain"
+          },
+          "mx_valid": {
+            "type": "boolean",
+            "description": "Domain has valid MX records"
+          },
+          "has_typo": {
+            "type": "boolean",
+            "description": "Possible typo detected in domain"
+          }
+        }
+      },
+      "AIValidationResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "data": {
+            "$ref": "#/components/schemas/AIValidationResult"
+          },
+          "credits_used": { "type": "integer" },
+          "remaining_credits": { "type": "integer" },
+          "rate_limit": { "$ref": "#/components/schemas/RateLimitInfo" }
+        }
+      },
+      "AIValidationResult": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "valid": { "type": "boolean" },
+          "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "disposable": { "type": "boolean" },
+          "mx_found": { "type": "boolean" },
+          "format_valid": { "type": "boolean" },
+          "domain": { "type": "string" },
+          "risk_level": { "$ref": "#/components/schemas/RiskLevel" },
+          "risk_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "AI-computed risk score (0=safe, 100=dangerous)"
+          },
+          "fraud_indicators": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of detected fraud indicators"
+          },
+          "typo_detected": {
+            "type": "boolean",
+            "description": "AI detected a typosquatting attempt"
+          },
+          "suggested_correction": {
+            "type": "string",
+            "nullable": true,
+            "description": "AI-suggested domain correction"
+          },
+          "domain_analysis": {
+            "type": "string",
+            "nullable": true,
+            "description": "AI analysis of the email domain"
+          },
+          "recommendations": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "AI-generated recommendations"
+          },
+          "response_time_ms": { "type": "integer" },
+          "ai_powered": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      },
+      "BulkValidationRequest": {
+        "type": "object",
+        "properties": {
+          "emails": {
+            "type": "array",
+            "items": { "type": "string", "format": "email" },
+            "maxItems": 10000,
+            "description": "Array of email addresses to validate"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original file name for reference"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Schedule validation for future execution (ISO 8601)"
+          }
+        }
+      },
+      "BulkValidationResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique job identifier for tracking"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "total_emails": { "type": "integer" },
+          "message": { "type": "string" }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy", "degraded", "down"]
+          },
+          "version": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "services": {
+            "type": "object",
+            "properties": {
+              "api": { "type": "string", "enum": ["operational", "degraded", "down"] },
+              "database": { "type": "string", "enum": ["operational", "degraded", "down"] },
+              "validation": { "type": "string", "enum": ["operational", "degraded", "down"] }
+            }
+          },
+          "response_time_ms": { "type": "integer" }
+        }
+      },
+      "RiskLevel": {
+        "type": "string",
+        "enum": ["low", "medium", "high", "critical"],
+        "description": "Risk classification for the email"
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": ["pending", "processing", "completed", "failed"],
+        "description": "Current status of a bulk validation job"
+      },
+      "RateLimitInfo": {
+        "type": "object",
+        "properties": {
+          "remaining": {
+            "type": "integer",
+            "description": "Remaining requests in current window"
+          },
+          "reset_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the rate limit window resets"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "const": false },
+          "error": { "type": "string", "description": "Human-readable error message" },
+          "code": { "$ref": "#/components/schemas/ErrorCode" }
+        }
+      },
+      "InsufficientCreditsError": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "code": { "type": "string", "const": "INSUFFICIENT_CREDITS" },
+          "credits_required": { "type": "integer" },
+          "credits_available": { "type": "integer" }
+        }
+      },
+      "RateLimitError": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "code": { "type": "string", "const": "RATE_LIMIT_EXCEEDED" },
+          "retry_after_seconds": { "type": "integer" }
+        }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "MISSING_API_KEY",
+          "INVALID_API_KEY",
+          "INSUFFICIENT_CREDITS",
+          "RATE_LIMIT_EXCEEDED",
+          "MISSING_EMAIL",
+          "INVALID_EMAIL",
+          "INTERNAL_ERROR"
+        ]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing API key",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "PaymentRequired": {
+        "description": "Insufficient credits",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/InsufficientCreditsError" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Invalid API key",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RateLimitError" }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      }
+    }
+  },
+  "x-sdk-generation": {
+    "enabled": true,
+    "languages": ["TypeScript", "Python", "Go"],
+    "distribution": {
+      "typescript": "npm:@xpex/goldmail-sdk",
+      "python": "pip:goldmail-sdk",
+      "go": "go get github.com/xpex/goldmail-go"
+    }
+  }
+}
