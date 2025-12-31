@@ -4,43 +4,17 @@ import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Database, ShoppingCart, TrendingUp, Package, ArrowRight, Search, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { Database, ShoppingCart, TrendingUp, Package, ArrowRight, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const ExtrairProdutos = () => {
-  const [url, setUrl] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  const handleExtract = async () => {
-    if (!url) return;
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setResult({
-      title: 'iPhone 15 Pro Max 256GB',
-      price: 'R$ 8.499,00',
-      original_price: 'R$ 9.999,00',
-      discount: '15%',
-      seller: 'Apple Store Oficial',
-      rating: 4.9,
-      reviews: 2847,
-      availability: 'Em estoque',
-      shipping: 'Frete grátis',
-      images: 3,
-      marketplace: 'Mercado Livre',
-    });
-    setLoading(false);
-  };
-
   return (
     <>
       <Helmet>
-        <title>ExtrairProdutos - Product Data Scraper | XPEX AI</title>
+        <title>ExtrairProdutos - Product Data Scraper | XPEX Neural</title>
         <meta
           name="description"
-          content="Scrape product data from major marketplaces automatically. Price tracking and structured data extraction."
+          content="Scrape product data from major marketplaces automatically. Coming soon to XPEX Neural."
         />
       </Helmet>
 
@@ -54,8 +28,9 @@ const ExtrairProdutos = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <Badge variant="outline" className="mb-6 text-primary border-primary/30">
-                Data Extraction
+              <Badge className="mb-6 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                <Clock className="w-3 h-3 mr-1" />
+                Coming Soon
               </Badge>
 
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -64,103 +39,76 @@ const ExtrairProdutos = () => {
               </h1>
 
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                Extraia dados de produtos de marketplaces automaticamente. Monitoramento de preços e dados estruturados.
+                Extract product data from marketplaces automatically. Price monitoring and structured data extraction.
               </p>
 
-              {/* Demo Extractor */}
+              {/* Coming Soon Card */}
               <Card className="p-8 bg-card/50 backdrop-blur border-border/50 max-w-2xl mx-auto">
-                <div className="flex gap-4 mb-6">
-                  <Input
-                    placeholder="Cole a URL do produto (Mercado Livre, Amazon, etc.)"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleExtract} disabled={loading || !url}>
-                    {loading ? (
-                      <>
-                        <Database className="w-4 h-4 mr-2 animate-spin" /> Extraindo...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" /> Extrair
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {result && (
-                  <div className="text-left space-y-4 p-4 rounded-lg bg-background/50">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-primary border-primary/30">
-                        {result.marketplace}
-                      </Badge>
-                      <Badge variant="secondary" className="text-green-500">
-                        {result.availability}
-                      </Badge>
-                    </div>
-
-                    <h3 className="font-bold text-lg">{result.title}</h3>
-
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl font-bold text-primary">{result.price}</span>
-                      <span className="text-muted-foreground line-through">{result.original_price}</span>
-                      <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
-                        -{result.discount}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border/50">
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{result.seller}</div>
-                        <div className="text-xs text-muted-foreground">Vendedor</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium">⭐ {result.rating}</div>
-                        <div className="text-xs text-muted-foreground">{result.reviews} avaliações</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{result.shipping}</div>
-                        <div className="text-xs text-muted-foreground">Entrega</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{result.images} imagens</div>
-                        <div className="text-xs text-muted-foreground">Mídia</div>
-                      </div>
-                    </div>
+                <div className="text-center space-y-6">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center">
+                    <Database className="w-10 h-10 text-yellow-500" />
                   </div>
-                )}
+                  
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">In Development</h3>
+                    <p className="text-muted-foreground">
+                      We're building a robust product data extraction API supporting major marketplaces with price tracking and structured output.
+                      Join the waitlist to be notified at launch.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button variant="outline" asChild>
+                      <Link to="/auth">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notify Me at Launch
+                      </Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/products/goldmail-validation">
+                        Explore GoldMail API <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Features */}
+        {/* Planned Features */}
         <section className="py-20 bg-secondary/20">
           <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-center mb-8">Planned Features</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
                   icon: ShoppingCart,
                   title: 'Multi-marketplace',
-                  description: 'Suporte a Mercado Livre, Amazon, Shopee e mais.',
+                  description: 'Support for Mercado Livre, Amazon, Shopee, and more.',
+                  status: 'Planned'
                 },
                 {
                   icon: TrendingUp,
                   title: 'Price Tracking',
-                  description: 'Histórico de preços e alertas de variação.',
+                  description: 'Price history and variation alerts.',
+                  status: 'Planned'
                 },
                 {
                   icon: Package,
                   title: 'Structured Data',
-                  description: 'Dados estruturados em JSON prontos para uso.',
+                  description: 'JSON-ready structured data for immediate use.',
+                  status: 'Planned'
                 },
               ].map((feature) => (
                 <Card
                   key={feature.title}
-                  className="p-6 bg-card/50 backdrop-blur border-border/50"
+                  className="p-6 bg-card/50 backdrop-blur border-border/50 relative"
                 >
-                  <feature.icon className="w-10 h-10 text-primary mb-4" />
+                  <Badge variant="outline" className="absolute top-4 right-4 text-xs text-yellow-500 border-yellow-500/30">
+                    {feature.status}
+                  </Badge>
+                  <feature.icon className="w-10 h-10 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </Card>
@@ -169,14 +117,16 @@ const ExtrairProdutos = () => {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* CTA */}
         <section className="py-20">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Preço Simples</h2>
-            <p className="text-muted-foreground mb-8">$0.005 por extração</p>
+            <h2 className="text-3xl font-bold mb-4">Meanwhile, explore our validation API</h2>
+            <p className="text-muted-foreground mb-8">
+              GoldMail Validator is production-ready and available now.
+            </p>
             <Button size="lg" asChild>
-              <Link to="/auth">
-                Começar Agora <ArrowRight className="w-4 h-4 ml-2" />
+              <Link to="/products/goldmail-validation">
+                Explore GoldMail <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
           </div>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Zap, Menu, X, ChevronDown } from "lucide-react";
+import { Zap, Menu, X, Clock } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,22 +13,45 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { Badge } from "@/components/ui/badge";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+
   const { user } = useAuth();
 
-  const products = [
-    { name: "GoldMail Platform", href: "/products/goldmail-validation", description: "Plataforma de validação de email enterprise" },
-    { name: "GoldMail API", href: "/products/goldmail-api", description: "API REST para integração direta" },
-    { name: "GoldMail SaaS", href: "/products/goldmail-saas", description: "Dashboard visual para equipes" },
-    { name: "Bridge Scan", href: "/marketplace", description: "Verificação de vazamentos de dados" },
-    { name: "IP Insight", href: "/marketplace", description: "Geolocalização e análise de ameaças" },
-    { name: "Link Magic", href: "/marketplace", description: "Monitoramento de saúde de URLs" },
+  // CORE: Only GoldMail is LIVE, everything else is FUTURE
+  const coreProducts = [
+    { 
+      name: "GoldMail API", 
+      href: "/products/goldmail-api", 
+      description: "Email validation REST API",
+      status: "live" as const
+    },
+    { 
+      name: "GoldMail Validator", 
+      href: "/products/goldmail-validation", 
+      description: "Enterprise email intelligence platform",
+      status: "live" as const
+    },
+    { 
+      name: "GoldMail SaaS", 
+      href: "/products/goldmail-saas", 
+      description: "Visual dashboard for teams",
+      status: "live" as const
+    },
+  ];
+
+  const futureProducts = [
+    { name: "BreachScan", href: "/products/breach-scan", description: "Data breach detection", status: "coming-soon" as const },
+    { name: "IPInsight", href: "/products/ip-insight", description: "IP intelligence & geolocation", status: "coming-soon" as const },
+    { name: "LinkMagic", href: "/products/link-magic", description: "URL health monitoring", status: "coming-soon" as const },
+    { name: "CopyVoraz", href: "/products/copy-voraz", description: "AI viral copy generator", status: "coming-soon" as const },
+    { name: "ExtrairProdutos", href: "/products/extrair-produtos", description: "Marketplace data scraper", status: "coming-soon" as const },
   ];
 
   const navLinks = [
-    { name: "Preços", href: "/pricing", isRoute: true },
+    { name: "Pricing", href: "/pricing", isRoute: true },
     { name: "Docs", href: "/docs", isRoute: true },
     { name: "Status", href: "/status", isRoute: true },
   ];
@@ -53,34 +76,76 @@ const Navbar = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-primary text-sm font-medium">
-                    Produtos
+                    Products
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[280px] gap-2 p-3 bg-background border border-border rounded-lg">
-                      {products.map((product) => (
-                        <li key={product.name}>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              to={product.href}
-                              className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                            >
-                              <div className="text-sm font-medium text-foreground">{product.name}</div>
-                              <p className="text-xs text-muted-foreground mt-1">{product.description}</p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                      ))}
-                      <li>
+                    <div className="w-[400px] p-4 bg-background border border-border rounded-lg">
+                      {/* CORE Products - Live */}
+                      <div className="mb-4">
+                        <div className="text-xs uppercase text-muted-foreground font-semibold mb-2 px-2">
+                          Core Platform
+                        </div>
+                        <ul className="space-y-1">
+                          {coreProducts.map((product) => (
+                            <li key={product.name}>
+                              <NavigationMenuLink asChild>
+                                <Link
+                                  to={product.href}
+                                  className="flex items-center justify-between rounded-md p-3 hover:bg-accent transition-colors"
+                                >
+                                  <div>
+                                    <div className="text-sm font-medium text-foreground">{product.name}</div>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{product.description}</p>
+                                  </div>
+                                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-xs shrink-0">
+                                    Live
+                                  </Badge>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* FUTURE Products - Coming Soon */}
+                      <div className="border-t border-border pt-4">
+                        <div className="text-xs uppercase text-muted-foreground font-semibold mb-2 px-2">
+                          Coming Soon
+                        </div>
+                        <ul className="space-y-1">
+                          {futureProducts.map((product) => (
+                            <li key={product.name}>
+                              <NavigationMenuLink asChild>
+                                <Link
+                                  to={product.href}
+                                  className="flex items-center justify-between rounded-md p-3 hover:bg-accent/50 transition-colors opacity-70"
+                                >
+                                  <div>
+                                    <div className="text-sm font-medium text-muted-foreground">{product.name}</div>
+                                    <p className="text-xs text-muted-foreground/70 mt-0.5">{product.description}</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-muted-foreground border-border text-xs shrink-0">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Soon
+                                  </Badge>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="border-t border-border pt-3 mt-3">
                         <NavigationMenuLink asChild>
                           <Link
                             to="/marketplace"
-                            className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-sm font-medium text-primary"
+                            className="block text-center text-sm font-medium text-primary hover:text-primary/80 py-2"
                           >
-                            Ver Todas as APIs →
+                            View All APIs →
                           </Link>
                         </NavigationMenuLink>
-                      </li>
-                    </ul>
+                      </div>
+                    </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -111,7 +176,7 @@ const Navbar = () => {
                   <Button variant="ghost" size="sm">Login</Button>
                 </Link>
                 <Link to="/auth">
-                  <Button variant="neon" size="sm">Obter API Key</Button>
+                  <Button variant="neon" size="sm">Get API Key</Button>
                 </Link>
               </>
             )}
@@ -125,14 +190,36 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border/50">
             <div className="flex flex-col gap-4">
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Produtos</div>
-              {products.map((product) => (
-                <Link key={product.name} to={product.href} className="text-muted-foreground hover:text-primary transition-colors pl-2" onClick={() => setIsOpen(false)}>
+              {/* Core Products */}
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Core Platform</div>
+              {coreProducts.map((product) => (
+                <Link 
+                  key={product.name} 
+                  to={product.href} 
+                  className="text-foreground hover:text-primary transition-colors pl-2 flex items-center justify-between" 
+                  onClick={() => setIsOpen(false)}
+                >
                   {product.name}
+                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-xs">Live</Badge>
                 </Link>
               ))}
+              
+              {/* Future Products */}
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mt-4">Coming Soon</div>
+              {futureProducts.map((product) => (
+                <Link 
+                  key={product.name} 
+                  to={product.href} 
+                  className="text-muted-foreground hover:text-primary/70 transition-colors pl-2 flex items-center justify-between opacity-60" 
+                  onClick={() => setIsOpen(false)}
+                >
+                  {product.name}
+                  <Badge variant="outline" className="text-xs"><Clock className="w-3 h-3 mr-1" />Soon</Badge>
+                </Link>
+              ))}
+
               <Link to="/marketplace" className="text-primary hover:text-primary/80 transition-colors pl-2" onClick={() => setIsOpen(false)}>
-                Ver Todas as APIs →
+                View All APIs →
               </Link>
               <div className="border-t border-border/50 pt-4 mt-2">
                 {navLinks.map((link) =>
