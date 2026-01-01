@@ -81,7 +81,7 @@ verify_jwt = false
 [functions.process-scheduled-validations]
 verify_jwt = false
 
-# Bot API - Enterprise-grade endpoints for automated systems
+# Bot API
 [functions.bot-validate]
 verify_jwt = false
 
@@ -91,7 +91,7 @@ verify_jwt = false
 [functions.bot-health]
 verify_jwt = false
 
-# Bot Consumer - Internal bot for automated API consumption
+# Bot Consumer
 [functions.bot-consumer-validate]
 verify_jwt = false
 
@@ -104,6 +104,11 @@ verify_jwt = false
 [functions.bot-consumer-auto-recharge]
 verify_jwt = false
 
-# Bot Credit Webhooks - Notifications for credit events
 [functions.bot-credit-webhook]
+verify_jwt = false
+
+[functions.bot-scheduled-validation]
+verify_jwt = false
+
+[functions.bot-credit-alert-email]
 verify_jwt = false
