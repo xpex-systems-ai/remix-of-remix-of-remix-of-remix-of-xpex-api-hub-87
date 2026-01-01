@@ -32,6 +32,7 @@ These components are production-ready and form the foundation of the platform:
 | **Credit System** | ✅ Live | `credit_transactions` table, deduction/addition functions |
 | **Stripe Integration** | ✅ Live | Subscriptions, one-time purchases, customer portal |
 | **GoldMail Validation API** | ✅ Live | `/validate-email`, `/validate-email-ai`, `/bulk-validate-email` |
+| **Bot API** | ✅ Live | Infrastructure API for bots, agents, and automated systems |
 | **Usage Analytics** | ✅ Live | `usage_logs` table with endpoint breakdown |
 | **Admin Dashboard** | ✅ Live | Role-based access via `user_roles` table |
 | **Referral System** | ✅ Live | `referrals` table with reward tracking |

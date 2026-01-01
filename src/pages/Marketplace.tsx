@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Search, Star, Zap, Shield, Globe, Database, Link2, Mail, Clock } from "lucide-react";
+import { Search, Star, Zap, Shield, Globe, Database, Link2, Mail, Clock, Bot } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,6 +38,20 @@ const apis: API[] = [
     featured: true,
     features: ["MX Check", "AI Risk Score", "Disposable Detection", "<50ms Latency"],
     href: "/products/goldmail-validation",
+    status: "live",
+  },
+  {
+    id: "bot-api",
+    name: "Bot API",
+    description: "Infrastructure API for automated systems & bots. Built for scale, stability, and pay-per-use.",
+    icon: Bot,
+    category: "Infrastructure",
+    pricing: "From $0.003/call",
+    rating: 4.8,
+    calls: "1M+",
+    featured: false,
+    features: ["Bot-First Design", "High Throughput", "Auto-Recharge", "Webhooks"],
+    href: "/products/bot-api",
     status: "live",
   },
   {
@@ -112,7 +126,7 @@ const apis: API[] = [
   },
 ];
 
-const categories = ["All", "Validation", "Security", "AI", "Data", "Utility"];
+const categories = ["All", "Validation", "Infrastructure", "Security", "AI", "Data", "Utility"];
 
 const StatusBadge = ({ status }: { status: ProductStatus }) => {
   if (status === "live") {
