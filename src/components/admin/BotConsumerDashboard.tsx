@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Bot, 
   Activity, 
@@ -22,6 +22,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useBotConsumer, BotConsumerLog } from '@/hooks/useBotConsumer';
 import { useCredits } from '@/hooks/useCredits';
 import { formatDistanceToNow } from 'date-fns';
+import { BotAPIPlayground } from './BotAPIPlayground';
+import { ScheduledValidations } from './ScheduledValidations';
+import { CreditAlertConfig } from './CreditAlertConfig';
 
 export const BotConsumerDashboard = () => {
   const { health, logs, stats, loading, error, refresh } = useBotConsumer();
@@ -106,6 +109,9 @@ export const BotConsumerDashboard = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-card/50 border border-border/50">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="playground">API Playground</TabsTrigger>
+          <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
+          <TabsTrigger value="alerts">Alerts</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
