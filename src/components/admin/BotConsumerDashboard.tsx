@@ -247,6 +247,18 @@ export const BotConsumerDashboard = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="playground" className="mt-4">
+          <BotAPIPlayground />
+        </TabsContent>
+
+        <TabsContent value="scheduled" className="mt-4">
+          <ScheduledValidations />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="mt-4">
+          <CreditAlertConfig />
+        </TabsContent>
+
         <TabsContent value="performance" className="mt-4">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Stats Summary */}
