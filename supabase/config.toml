@@ -90,3 +90,16 @@ verify_jwt = false
 
 [functions.bot-health]
 verify_jwt = false
+
+# Bot Consumer - Internal bot for automated API consumption
+[functions.bot-consumer-validate]
+verify_jwt = false
+
+[functions.bot-consumer-health]
+verify_jwt = false
+
+[functions.bot-consumer-logs]
+verify_jwt = false
+
+[functions.bot-consumer-auto-recharge]
+verify_jwt = false
