@@ -84,34 +84,57 @@ export type Database = {
         Row: {
           calls_count: number
           created_at: string
+          environment: string | null
+          expires_at: string | null
           id: string
+          is_sandbox: boolean | null
           key: string
           last_used_at: string | null
           name: string
+          rotated_from: string | null
+          rotation_scheduled_at: string | null
           status: string
           user_id: string
         }
         Insert: {
           calls_count?: number
           created_at?: string
+          environment?: string | null
+          expires_at?: string | null
           id?: string
+          is_sandbox?: boolean | null
           key: string
           last_used_at?: string | null
           name: string
+          rotated_from?: string | null
+          rotation_scheduled_at?: string | null
           status?: string
           user_id: string
         }
         Update: {
           calls_count?: number
           created_at?: string
+          environment?: string | null
+          expires_at?: string | null
           id?: string
+          is_sandbox?: boolean | null
           key?: string
           last_used_at?: string | null
           name?: string
+          rotated_from?: string | null
+          rotation_scheduled_at?: string | null
           status?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_rotated_from_fkey"
+            columns: ["rotated_from"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
@@ -840,6 +863,26 @@ export type Database = {
         Returns: boolean
       }
       increment_api_key_calls: { Args: { key_id: string }; Returns: undefined }
+      rotate_api_key: {
+        Args: { p_key_id: string; p_user_id: string }
+        Returns: {
+          expires_at: string
+          new_key: string
+          new_key_id: string
+        }[]
+      }
+      validate_api_key_extended: {
+        Args: { p_key: string }
+        Returns: {
+          credits: number
+          is_expired: boolean
+          is_sandbox: boolean
+          key_id: string
+          tier: string
+          user_id: string
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
