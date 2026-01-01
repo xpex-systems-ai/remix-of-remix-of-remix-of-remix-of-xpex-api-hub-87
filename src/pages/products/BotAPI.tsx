@@ -42,29 +42,22 @@ const valueProps = [
 const apiEndpoints = [
   {
     method: "POST",
-    path: "/v1/validate-email",
-    description: "Standard email validation with full domain analysis",
+    path: "/bot/validate-email",
+    description: "Email validation optimized for bots",
     badge: "Core",
     credits: 1
   },
   {
     method: "POST",
-    path: "/v1/validate-email-ai",
-    description: "AI-enhanced validation with behavioral inference",
+    path: "/bot/validate-email-ai",
+    description: "AI-enhanced validation for autonomous systems",
     badge: "AI",
     credits: 1
   },
   {
-    method: "POST",
-    path: "/v1/bulk-validate-email",
-    description: "Bulk validation for up to 10,000 emails per job",
-    badge: "Bulk",
-    credits: "dynamic"
-  },
-  {
     method: "GET",
-    path: "/v1/health",
-    description: "Health check endpoint for monitoring",
+    path: "/bot/health",
+    description: "System health check",
     badge: "Status",
     credits: 0
   }
@@ -72,14 +65,14 @@ const apiEndpoints = [
 
 const codeExample = `// Bot Integration Example
 const API_KEY = process.env.BOT_API_KEY;
-const BASE_URL = 'https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1';
+const BASE_URL = 'https://api.xpexneural.com';
 
 async function validateEmail(email) {
-  const response = await fetch(\`\${BASE_URL}/validate-email\`, {
+  const response = await fetch(\`\${BASE_URL}/bot/validate-email\`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': API_KEY
+      'x-api-key': API_KEY
     },
     body: JSON.stringify({ email })
   });
@@ -101,16 +94,16 @@ const result = await validateEmail('user@example.com');
 const features = [
   { icon: Bot, title: "Bot-First Design", description: "No UI dependency. Pure API consumption with predictable responses" },
   { icon: Zap, title: "High Throughput", description: "Handle millions of requests per day with horizontal scaling" },
-  { icon: Lock, title: "API Key Auth", description: "Secure access via API keys with rate limiting and monitoring" },
-  { icon: Activity, title: "Real-time Monitoring", description: "Live metrics, usage logs, and alerting via dashboard" },
-  { icon: Workflow, title: "Webhook Support", description: "Async callbacks for bulk operations and event notifications" },
+  { icon: Lock, title: "API Key Auth", description: "Secure access via x-api-key header with rate limiting" },
+  { icon: Activity, title: "Rate Limiting", description: "Tiered rate limits from 10 rps to custom enterprise levels" },
+  { icon: Shield, title: "Abuse Protection", description: "Built-in abuse detection and automatic key rotation support" },
   { icon: Clock, title: "99.9% Uptime SLA", description: "Enterprise reliability with automatic failover and credits" }
 ];
 
 const pricingPackages = [
-  { name: "Bot Starter", credits: "10,000", price: 29, description: "For small bots and early automation" },
-  { name: "Bot Scale", credits: "100,000", price: 199, description: "For production bots and SaaS backends" },
-  { name: "Bot Infinite", credits: "Custom", price: "Enterprise", description: "Unlimited usage with SLA and priority routing" }
+  { name: "Bot Starter", credits: "50,000", price: 29, rateLimit: "10 rps", description: "For small bots and early automation", recommended: false },
+  { name: "Bot Scale", credits: "500,000", price: 199, rateLimit: "50 rps", description: "For production bots and SaaS backends", recommended: true },
+  { name: "Enterprise", credits: "Unlimited", price: "Custom", rateLimit: "Custom", description: "99.9% SLA with priority routing", recommended: false }
 ];
 
 const BotAPI = () => {
@@ -330,16 +323,17 @@ const BotAPI = () => {
             {pricingPackages.map((pkg, i) => (
               <Card 
                 key={i} 
-                className={`p-6 bg-slate-900/50 border-slate-800 hover:border-violet-500/30 transition-all ${i === 1 ? 'ring-2 ring-violet-500/50' : ''}`}
+                className={`p-6 bg-slate-900/50 border-slate-800 hover:border-violet-500/30 transition-all ${pkg.recommended ? 'ring-2 ring-violet-500/50' : ''}`}
               >
-                {i === 1 && (
-                  <Badge className="bg-violet-500/20 text-violet-400 border-violet-500/30 mb-4">Most Popular</Badge>
+                {pkg.recommended && (
+                  <Badge className="bg-violet-500/20 text-violet-400 border-violet-500/30 mb-4">Recommended</Badge>
                 )}
                 <h3 className="font-bold text-xl text-slate-100 mb-2">{pkg.name}</h3>
                 <div className="text-3xl font-bold text-violet-400 mb-2">
                   {typeof pkg.price === 'number' ? `$${pkg.price}` : pkg.price}
                 </div>
-                <p className="text-sm text-slate-500 mb-4">{pkg.credits} credits</p>
+                <p className="text-sm text-slate-500 mb-1">{pkg.credits} credits</p>
+                <p className="text-xs text-slate-600 mb-4">Rate limit: {pkg.rateLimit}</p>
                 <p className="text-sm text-slate-400">{pkg.description}</p>
               </Card>
             ))}
