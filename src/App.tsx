@@ -40,7 +40,8 @@ import GoldMailBundles from "./pages/products/GoldMailBundles";
 import GoldMailPlugin from "./pages/products/GoldMailPlugin";
 import GoldMailExtension from "./pages/products/GoldMailExtension";
 import GoldMailAgent from "./pages/products/GoldMailAgent";
-import BotAPI from "./pages/products/BotAPI";
+import AgentAPI from "./pages/products/AgentAPI";
+import AgentDocs from "./pages/docs/AgentDocs";
 import RequestAccess from "./pages/RequestAccess";
 import Credits from "./pages/Credits";
 import DesignSystem from "./pages/DesignSystem";
@@ -95,7 +96,8 @@ const App = () => (
                   <Route path="/products/goldmail-plugin" element={<GoldMailPlugin />} />
                   <Route path="/products/goldmail-extension" element={<GoldMailExtension />} />
                   <Route path="/products/goldmail-agent" element={<GoldMailAgent />} />
-                  <Route path="/products/bot-api" element={<BotAPI />} />
+                  <Route path="/products/agent-api" element={<AgentAPI />} />
+                  <Route path="/docs/agents" element={<AgentDocs />} />
                   <Route path="/request-access" element={<RequestAccess />} />
                   <Route path="/credits" element={<Credits />} />
                   <Route path="/design-system" element={<DesignSystem />} />

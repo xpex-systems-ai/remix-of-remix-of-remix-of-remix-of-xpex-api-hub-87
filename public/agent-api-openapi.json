@@ -1,0 +1,539 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "XPEX Agent API",
+    "description": "Enterprise-grade infrastructure API for autonomous agents, AI systems, and automated workflows. Designed for high-throughput, pay-per-use email validation with tiered rate limiting and sandbox testing.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XPEX Systems API Support",
+      "email": "api@xpexsystems.com",
+      "url": "https://xpexsystems.com/support"
+    },
+    "license": {
+      "name": "Commercial",
+      "url": "https://xpexsystems.com/terms"
+    },
+    "x-logo": {
+      "url": "https://xpexsystems.com/logo.png"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.xpexsystems.com",
+      "description": "Production API"
+    },
+    {
+      "url": "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1",
+      "description": "Direct Edge Functions"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Validation",
+      "description": "Email validation endpoints optimized for agents"
+    },
+    {
+      "name": "AI Validation",
+      "description": "AI-enhanced email analysis for autonomous systems"
+    },
+    {
+      "name": "System",
+      "description": "Health and status endpoints"
+    }
+  ],
+  "paths": {
+    "/agent-validate": {
+      "post": {
+        "operationId": "agentValidate",
+        "summary": "Validate Email (Agent-Optimized)",
+        "description": "High-performance email validation with real MX DNS verification, optimized for automated systems. Costs 1 credit per request (free in sandbox mode). Rate limits apply based on subscription tier.",
+        "tags": ["Validation"],
+        "x-credits-cost": 1,
+        "parameters": [
+          {
+            "name": "x-sandbox-mode",
+            "in": "header",
+            "description": "Set to 'true' to test without consuming credits",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              },
+              "example": {
+                "email": "user@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "data": {
+                    "email": "user@gmail.com",
+                    "valid": true,
+                    "score": 95,
+                    "checks": {
+                      "format_valid": true,
+                      "is_disposable": false,
+                      "mx_valid": true,
+                      "has_typo": false
+                    },
+                    "suggestion": null,
+                    "risk_level": "low",
+                    "mx_records": ["alt1.gmail-smtp-in.l.google.com"]
+                  },
+                  "meta": {
+                    "credits_used": 1,
+                    "remaining_credits": 49999,
+                    "response_time_ms": 45,
+                    "tier": "Growth",
+                    "sandbox_mode": false,
+                    "rate_limit": {
+                      "limit": 50,
+                      "remaining": 49,
+                      "reset_at": "2024-01-15T12:00:01Z"
+                    },
+                    "api_version": "1.0.0",
+                    "endpoint": "/agent/validate"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Requests per second limit for your tier"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Remaining requests in current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when window resets"
+              },
+              "X-Agent-API-Version": {
+                "schema": { "type": "string" },
+                "description": "Agent API version"
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "$ref": "#/components/responses/PaymentRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/agent-validate-ai": {
+      "post": {
+        "operationId": "agentValidateAI",
+        "summary": "AI-Enhanced Validation (Agent-Optimized)",
+        "description": "Advanced AI-powered email validation with fraud detection, typosquatting analysis, and domain reputation scoring. Optimized for autonomous systems. Costs 1 credit per request (free in sandbox mode).",
+        "tags": ["AI Validation"],
+        "x-credits-cost": 1,
+        "parameters": [
+          {
+            "name": "x-sandbox-mode",
+            "in": "header",
+            "description": "Set to 'true' to test without consuming credits",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful AI validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIValidationResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "data": {
+                    "email": "user@gmail.com",
+                    "valid": true,
+                    "score": 92,
+                    "checks": {
+                      "format_valid": true,
+                      "is_disposable": false,
+                      "mx_valid": true,
+                      "has_typo": false
+                    },
+                    "domain": "gmail.com",
+                    "risk_level": "low",
+                    "risk_score": 8,
+                    "fraud_indicators": [],
+                    "suggested_correction": null,
+                    "domain_analysis": "Gmail is a major email provider with excellent deliverability",
+                    "recommendations": ["Safe for transactional emails"],
+                    "mx_records": ["alt1.gmail-smtp-in.l.google.com"],
+                    "ai_confidence": 95,
+                    "ai_powered": true
+                  },
+                  "meta": {
+                    "credits_used": 1,
+                    "remaining_credits": 49998,
+                    "response_time_ms": 850,
+                    "tier": "Growth",
+                    "sandbox_mode": false,
+                    "rate_limit": {
+                      "limit": 50,
+                      "remaining": 48,
+                      "reset_at": "2024-01-15T12:00:01Z"
+                    },
+                    "api_version": "1.0.0",
+                    "endpoint": "/agent/validate-ai"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "$ref": "#/components/responses/PaymentRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/agent-health": {
+      "get": {
+        "operationId": "agentHealth",
+        "summary": "Agent API Health Check",
+        "description": "Returns the current health status of the Agent API and its services including database, AI, and MX resolver. No authentication required. No credit cost.",
+        "tags": ["System"],
+        "security": [],
+        "x-credits-cost": 0,
+        "responses": {
+          "200": {
+            "description": "System health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "status": "operational",
+                  "timestamp": "2024-01-15T12:00:00Z",
+                  "version": "1.0.0",
+                  "uptime_seconds": 86400,
+                  "services": [
+                    { "name": "database", "status": "operational", "latency_ms": 12 },
+                    { "name": "ai_service", "status": "operational", "latency_ms": 1 },
+                    { "name": "mx_resolver", "status": "operational", "latency_ms": 45 },
+                    { "name": "runtime", "status": "operational", "latency_ms": 0 }
+                  ],
+                  "endpoints": [
+                    { "path": "/agent/validate", "method": "POST", "status": "available", "cost": 1 },
+                    { "path": "/agent/validate-ai", "method": "POST", "status": "available", "cost": 1 },
+                    { "path": "/agent/health", "method": "GET", "status": "available", "cost": 0 }
+                  ],
+                  "rate_limits": [
+                    { "tier": "Free", "requests_per_second": 5 },
+                    { "tier": "Starter", "requests_per_second": 10 },
+                    { "tier": "Growth", "requests_per_second": 50 },
+                    { "tier": "Enterprise", "requests_per_second": 500 }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key for authentication. Generate from Dashboard > API Keys."
+      }
+    },
+    "schemas": {
+      "EmailRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The email address to validate",
+            "example": "user@example.com"
+          }
+        }
+      },
+      "ValidationResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "description": "Request success status" },
+          "data": { "$ref": "#/components/schemas/ValidationData" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
+      },
+      "ValidationData": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "valid": { "type": "boolean" },
+          "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "format_valid": { "type": "boolean" },
+              "is_disposable": { "type": "boolean" },
+              "mx_valid": { "type": "boolean" },
+              "has_typo": { "type": "boolean" }
+            }
+          },
+          "suggestion": { "type": "string", "nullable": true },
+          "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+          "mx_records": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "AIValidationResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/AIValidationData" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
+      },
+      "AIValidationData": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "valid": { "type": "boolean" },
+          "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "format_valid": { "type": "boolean" },
+              "is_disposable": { "type": "boolean" },
+              "mx_valid": { "type": "boolean" },
+              "has_typo": { "type": "boolean" }
+            }
+          },
+          "domain": { "type": "string" },
+          "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+          "risk_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "fraud_indicators": { "type": "array", "items": { "type": "string" } },
+          "suggested_correction": { "type": "string", "nullable": true },
+          "domain_analysis": { "type": "string", "nullable": true },
+          "recommendations": { "type": "array", "items": { "type": "string" } },
+          "mx_records": { "type": "array", "items": { "type": "string" } },
+          "ai_confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "ai_powered": { "type": "boolean", "const": true }
+        }
+      },
+      "ResponseMeta": {
+        "type": "object",
+        "properties": {
+          "credits_used": { "type": "integer" },
+          "remaining_credits": { "type": "integer" },
+          "response_time_ms": { "type": "integer" },
+          "tier": { "type": "string" },
+          "sandbox_mode": { "type": "boolean" },
+          "rate_limit": {
+            "type": "object",
+            "properties": {
+              "limit": { "type": "integer" },
+              "remaining": { "type": "integer" },
+              "reset_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "api_version": { "type": "string" },
+          "endpoint": { "type": "string" }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "status": { "type": "string", "enum": ["operational", "degraded", "outage"] },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "version": { "type": "string" },
+          "uptime_seconds": { "type": "integer" },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "status": { "type": "string", "enum": ["operational", "degraded", "outage"] },
+                "latency_ms": { "type": "integer" },
+                "message": { "type": "string" }
+              }
+            }
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": { "type": "string" },
+                "method": { "type": "string" },
+                "status": { "type": "string", "enum": ["available", "unavailable"] },
+                "cost": { "type": "integer" }
+              }
+            }
+          },
+          "rate_limits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tier": { "type": "string" },
+                "requests_per_second": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
+      "RateLimitError": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "code": { "type": "string", "const": "RATE_LIMIT_EXCEEDED" },
+          "tier": { "type": "string" },
+          "retry_after_seconds": { "type": "integer" }
+        }
+      },
+      "InsufficientCreditsError": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "code": { "type": "string", "const": "INSUFFICIENT_CREDITS" },
+          "credits_required": { "type": "integer" },
+          "credits_available": { "type": "integer" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request - Missing or invalid email",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "ok": false, "error": "Email is required", "code": "MISSING_EMAIL" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Missing API key",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "ok": false, "error": "API key required. Include x-api-key header.", "code": "MISSING_API_KEY" }
+          }
+        }
+      },
+      "PaymentRequired": {
+        "description": "Payment Required - Insufficient credits",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/InsufficientCreditsError" },
+            "example": { "ok": false, "error": "Insufficient credits", "code": "INSUFFICIENT_CREDITS", "credits_required": 1, "credits_available": 0 }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Invalid or expired API key",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "ok": false, "error": "Invalid or inactive API key", "code": "INVALID_API_KEY" }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too Many Requests - Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RateLimitError" },
+            "example": { "ok": false, "error": "Rate limit exceeded for Growth tier (50 req/s)", "code": "RATE_LIMIT_EXCEEDED", "tier": "Growth", "retry_after_seconds": 1 }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "ok": false, "error": "Internal server error", "code": "INTERNAL_ERROR" }
+          }
+        }
+      }
+    }
+  },
+  "x-sdk": {
+    "enabled": true,
+    "languages": ["typescript", "python", "go"],
+    "distribution": {
+      "typescript": "npm:@xpex/agent-sdk",
+      "python": "pip:xpex-agent",
+      "go": "go.xpexsystems.com/agent"
+    }
+  }
+}
