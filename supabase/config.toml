@@ -103,3 +103,7 @@ verify_jwt = false
 
 [functions.bot-consumer-auto-recharge]
 verify_jwt = false
+
+# Bot Credit Webhooks - Notifications for credit events
+[functions.bot-credit-webhook]
+verify_jwt = false

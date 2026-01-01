@@ -11,6 +11,7 @@ import {
   BarChart3,
   ShieldAlert,
   RefreshCw,
+  Bot,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { UsersManagement } from "@/components/admin/UsersManagement";
 import { SystemConfiguration } from "@/components/admin/SystemConfiguration";
 import { AuditLogsPanel } from "@/components/admin/AuditLogsPanel";
+import { BotConsumerDashboard } from "@/components/admin/BotConsumerDashboard";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -162,6 +164,10 @@ const Admin = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-card/50 border border-border/50 mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="bot-consumer">
+              <Bot className="w-4 h-4 mr-1" />
+              Bot Consumer
+            </TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
@@ -277,6 +283,10 @@ const Admin = () => {
                 </Button>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="bot-consumer">
+            <BotConsumerDashboard />
           </TabsContent>
 
           <TabsContent value="users">
