@@ -167,6 +167,30 @@ export function useBrain() {
     };
   }, [user, fetchAgents]);
 
+  // Subscribe to real-time updates on brain_decisions
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("brain_decisions_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "brain_decisions",
+        },
+        () => {
+          fetchDecisions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchDecisions]);
+
   return {
     health,
     agents,
