@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { toast } from "sonner";
 
 export interface AgentInfo {
   id: string;
@@ -69,6 +70,12 @@ export interface BrainStats {
   agentDistribution: Record<string, number>;
 }
 
+export interface RealtimeUpdate {
+  type: "agent" | "decision";
+  event: "INSERT" | "UPDATE" | "DELETE";
+  timestamp: Date;
+}
+
 export function useBrain() {
   const { user, session } = useAuth();
   const [health, setHealth] = useState<BrainHealth | null>(null);
@@ -77,6 +84,9 @@ export function useBrain() {
   const [stats, setStats] = useState<BrainStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<RealtimeUpdate | null>(null);
+  const [isLive, setIsLive] = useState(false);
+  const toastShownRef = useRef(false);
 
   const fetchHealth = useCallback(async () => {
     try {
@@ -143,12 +153,12 @@ export function useBrain() {
     }
   }, [user, session, refresh]);
 
-  // Subscribe to real-time updates on agent_registry
+  // Subscribe to real-time updates on agent_registry and brain_decisions
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel("agent_registry_changes")
+    const agentChannel = supabase
+      .channel("agent_registry_realtime")
       .on(
         "postgres_changes",
         {
@@ -156,23 +166,43 @@ export function useBrain() {
           schema: "public",
           table: "agent_registry",
         },
-        () => {
+        (payload) => {
+          const eventType = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
+          console.log("[Brain] Agent update:", eventType, payload);
+          
+          setLastUpdate({
+            type: "agent",
+            event: eventType,
+            timestamp: new Date(),
+          });
+          
           fetchAgents();
+          
+          if (eventType === "UPDATE") {
+            const newRecord = payload.new as AgentInfo;
+            if (newRecord.status === "degraded") {
+              toast.warning(`Agent ${newRecord.name} is degraded`, {
+                description: `Performance: ${(newRecord.performance_score * 100).toFixed(0)}%`,
+              });
+            }
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setIsLive(true);
+          if (!toastShownRef.current) {
+            toast.success("Real-time updates connected", {
+              description: "Agent status will update automatically",
+              duration: 2000,
+            });
+            toastShownRef.current = true;
+          }
+        }
+      });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, fetchAgents]);
-
-  // Subscribe to real-time updates on brain_decisions
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel("brain_decisions_changes")
+    const decisionChannel = supabase
+      .channel("brain_decisions_realtime")
       .on(
         "postgres_changes",
         {
@@ -180,16 +210,32 @@ export function useBrain() {
           schema: "public",
           table: "brain_decisions",
         },
-        () => {
+        (payload) => {
+          console.log("[Brain] New decision:", payload);
+          
+          setLastUpdate({
+            type: "decision",
+            event: "INSERT",
+            timestamp: new Date(),
+          });
+          
           fetchDecisions();
+          
+          const newDecision = payload.new as BrainDecision;
+          toast.info(`New decision: ${newDecision.decision_type}`, {
+            description: `Agent: ${newDecision.agent_selected || "N/A"} | Confidence: ${((newDecision.confidence_score || 0) * 100).toFixed(0)}%`,
+            duration: 3000,
+          });
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      setIsLive(false);
+      supabase.removeChannel(agentChannel);
+      supabase.removeChannel(decisionChannel);
     };
-  }, [user, fetchDecisions]);
+  }, [user, fetchAgents, fetchDecisions]);
 
   return {
     health,
@@ -200,5 +246,7 @@ export function useBrain() {
     error,
     refresh,
     fetchDecisions,
+    lastUpdate,
+    isLive,
   };
 }
