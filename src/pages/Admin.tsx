@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   RefreshCw,
   Cpu,
+  Brain,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import { UsersManagement } from "@/components/admin/UsersManagement";
 import { SystemConfiguration } from "@/components/admin/SystemConfiguration";
 import { AuditLogsPanel } from "@/components/admin/AuditLogsPanel";
 import { AgentConsumerDashboard } from "@/components/admin/AgentConsumerDashboard";
+import BrainDashboard from "@/components/admin/BrainDashboard";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -162,8 +164,12 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-card/50 border border-border/50 mb-6">
+          <TabsList className="bg-card/50 border border-border/50 mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="brain">
+              <Brain className="w-4 h-4 mr-1" />
+              Brain Layer
+            </TabsTrigger>
             <TabsTrigger value="agent-consumer">
               <Cpu className="w-4 h-4 mr-1" />
               Agent Consumer
@@ -283,6 +289,10 @@ const Admin = () => {
                 </Button>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="brain">
+            <BrainDashboard />
           </TabsContent>
 
           <TabsContent value="agent-consumer">
