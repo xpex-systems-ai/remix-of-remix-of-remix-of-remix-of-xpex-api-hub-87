@@ -47,6 +47,60 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_registry: {
+        Row: {
+          avg_latency_ms: number | null
+          capabilities: string[] | null
+          cost_per_call: number | null
+          created_at: string
+          current_load: number | null
+          description: string | null
+          endpoint: string
+          id: string
+          max_load: number | null
+          metadata: Json | null
+          name: string
+          performance_score: number | null
+          status: string
+          success_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_latency_ms?: number | null
+          capabilities?: string[] | null
+          cost_per_call?: number | null
+          created_at?: string
+          current_load?: number | null
+          description?: string | null
+          endpoint: string
+          id?: string
+          max_load?: number | null
+          metadata?: Json | null
+          name: string
+          performance_score?: number | null
+          status?: string
+          success_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_latency_ms?: number | null
+          capabilities?: string[] | null
+          cost_per_call?: number | null
+          created_at?: string
+          current_load?: number | null
+          description?: string | null
+          endpoint?: string
+          id?: string
+          max_load?: number | null
+          metadata?: Json | null
+          name?: string
+          performance_score?: number | null
+          status?: string
+          success_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       alert_thresholds: {
         Row: {
           created_at: string
@@ -208,6 +262,75 @@ export type Database = {
           threshold_credits?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      brain_config: {
+        Row: {
+          config_key: string
+          config_value: Json
+          created_at: string
+          description: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_value: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      brain_decisions: {
+        Row: {
+          agent_selected: string | null
+          confidence_score: number | null
+          created_at: string
+          decision: Json
+          decision_type: string
+          execution_result: Json | null
+          id: string
+          inputs: Json
+          latency_ms: number | null
+          risk_assessment: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_selected?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          decision?: Json
+          decision_type: string
+          execution_result?: Json | null
+          id?: string
+          inputs?: Json
+          latency_ms?: number | null
+          risk_assessment?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_selected?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          decision?: Json
+          decision_type?: string
+          execution_result?: Json | null
+          id?: string
+          inputs?: Json
+          latency_ms?: number | null
+          risk_assessment?: Json | null
+          user_id?: string | null
         }
         Relationships: []
       }
