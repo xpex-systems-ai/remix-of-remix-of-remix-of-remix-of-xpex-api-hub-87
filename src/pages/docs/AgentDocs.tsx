@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Bot, Key, Zap, Shield, Code, Terminal, BookOpen, AlertTriangle } from 'lucide-react';
+import { Check, Copy, Key, Zap, Shield, Code, Terminal, BookOpen, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -184,19 +184,19 @@ func main() {
 }`;
 
   const curlExample = `# Health check (no auth required)
-curl -X GET "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/bot-health" \\
+curl -X GET "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/agent-health" \\
   -H "Content-Type: application/json"
 
 # Validate email (sandbox mode)
-curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/bot-validate" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/agent-validate" \\
+  -H "x-api-key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -H "X-Sandbox-Mode: true" \\
   -d '{"email": "test@example.com"}'
 
 # AI validation (production mode)
-curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/bot-validate-ai" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/agent-validate-ai" \\
+  -H "x-api-key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"email": "user@company.com"}'
 
@@ -209,8 +209,8 @@ curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/rotate-api-k
   return (
     <>
       <Helmet>
-        <title>Agent Onboarding | XPEX Neural Bot API Documentation</title>
-        <meta name="description" content="Complete guide for integrating AI agents and bots with XPEX Neural's Bot API. Includes SDK examples for TypeScript, Python, and Go." />
+        <title>Agent Onboarding | XPEX Agent API Documentation</title>
+        <meta name="description" content="Complete guide for integrating AI agents and automated systems with XPEX Neural's Agent API. Includes SDK examples for TypeScript, Python, and Go." />
       </Helmet>
 
       <Navbar />
@@ -220,15 +220,15 @@ curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/rotate-api-k
           {/* Hero Section */}
           <div className="text-center mb-12">
             <Badge variant="outline" className="mb-4">
-              <Bot className="w-3 h-3 mr-1" />
-              Bot API v2.0
+              <Zap className="w-3 h-3 mr-1" />
+              Agent API v2.0
             </Badge>
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Agent Onboarding Guide
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to integrate your AI agents, bots, and automated systems 
-              with the XPEX Neural Bot API for high-throughput email validation.
+              Everything you need to integrate your AI agents and automated systems 
+              with the XPEX Agent API for high-throughput email validation.
             </p>
           </div>
 
@@ -429,19 +429,19 @@ curl -X POST "https://ykunuwzqlwrskosyyrzm.supabase.co/functions/v1/rotate-api-k
                     </thead>
                     <tbody>
                       <tr className="border-b">
-                        <td className="py-2 px-4 font-mono text-xs">/bot-validate</td>
+                        <td className="py-2 px-4 font-mono text-xs">/agent-validate</td>
                         <td className="py-2 px-4"><Badge>POST</Badge></td>
                         <td className="py-2 px-4">1</td>
                         <td className="py-2 px-4">Standard email validation with MX check</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2 px-4 font-mono text-xs">/bot-validate-ai</td>
+                        <td className="py-2 px-4 font-mono text-xs">/agent-validate-ai</td>
                         <td className="py-2 px-4"><Badge>POST</Badge></td>
                         <td className="py-2 px-4">2</td>
                         <td className="py-2 px-4">AI-powered validation with fraud detection</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2 px-4 font-mono text-xs">/bot-health</td>
+                        <td className="py-2 px-4 font-mono text-xs">/agent-health</td>
                         <td className="py-2 px-4"><Badge variant="secondary">GET</Badge></td>
                         <td className="py-2 px-4">0</td>
                         <td className="py-2 px-4">Health check for all services</td>
