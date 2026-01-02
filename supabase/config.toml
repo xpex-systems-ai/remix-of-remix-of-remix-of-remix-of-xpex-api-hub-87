@@ -94,7 +94,29 @@ verify_jwt = false
 [functions.agent-health]
 verify_jwt = false
 
-# Agent Consumer (Internal)
+# Agent Consumer Services
+[functions.agent-consumer-validate]
+verify_jwt = false
+
+[functions.agent-consumer-health]
+verify_jwt = false
+
+[functions.agent-consumer-logs]
+verify_jwt = false
+
+[functions.agent-consumer-auto-recharge]
+verify_jwt = false
+
+[functions.agent-credit-webhook]
+verify_jwt = false
+
+[functions.agent-scheduled-validation]
+verify_jwt = false
+
+[functions.agent-credit-alert-email]
+verify_jwt = false
+
+# Legacy aliases (deprecated)
 [functions.bot-consumer-validate]
 verify_jwt = false
 
@@ -114,4 +136,13 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.bot-credit-alert-email]
+verify_jwt = false
+
+[functions.bot-validate]
+verify_jwt = false
+
+[functions.bot-validate-ai]
+verify_jwt = false
+
+[functions.bot-health]
 verify_jwt = false
