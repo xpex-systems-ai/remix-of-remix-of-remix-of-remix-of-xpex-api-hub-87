@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Search, Star, Zap, Shield, Globe, Database, Link2, Mail, Clock, Bot } from "lucide-react";
+import { Search, Star, Zap, Shield, Globe, Database, Link2, Mail, Clock, Cpu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,17 +41,17 @@ const apis: API[] = [
     status: "live",
   },
   {
-    id: "bot-api",
-    name: "Bot API",
-    description: "Infrastructure API for automated systems & bots. Built for scale, stability, and pay-per-use.",
-    icon: Bot,
+    id: "agent-api",
+    name: "Agent API",
+    description: "Infrastructure API for autonomous agents & AI systems. Built for scale, stability, and pay-per-use.",
+    icon: Cpu,
     category: "Infrastructure",
     pricing: "From $0.003/call",
     rating: 4.8,
     calls: "1M+",
     featured: false,
-    features: ["Bot-First Design", "High Throughput", "Auto-Recharge", "Webhooks"],
-    href: "/products/bot-api",
+    features: ["Agent-First Design", "High Throughput", "Auto-Recharge", "Webhooks"],
+    href: "/products/agent-api",
     status: "live",
   },
   {

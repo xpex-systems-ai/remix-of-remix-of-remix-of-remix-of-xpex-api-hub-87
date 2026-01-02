@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Bot, Code, Zap, Shield, Globe, Clock, ArrowRight, Copy, 
-  CheckCircle, ArrowLeft, Terminal, Lock, Activity, Cpu, Workflow
+  Cpu, Code, Zap, Shield, Globe, Clock, ArrowRight, Copy, 
+  CheckCircle, ArrowLeft, Terminal, Lock, Activity, Workflow
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 // Target Audience
 const targetAudience = [
   { role: "AI Agents", useCase: "Autonomous agents requiring email validation and intelligence services" },
-  { role: "Automation Bots", useCase: "RPA systems and workflow automation with API consumption" },
+  { role: "Automation Systems", useCase: "RPA systems and workflow automation with API consumption" },
   { role: "Enterprise Systems", useCase: "Backend services and microservices needing email validation" },
   { role: "Data Pipelines", useCase: "ETL workflows and data processing with bulk validation needs" }
 ];
@@ -23,7 +23,7 @@ const targetAudience = [
 // Value Propositions
 const valueProps = [
   { 
-    title: "Bot-First Design", 
+    title: "Agent-First Design", 
     description: "No UI dependency. Pure API consumption with predictable JSON responses and consistent schema.",
     metric: "0% UI"
   },
@@ -34,7 +34,7 @@ const valueProps = [
   },
   { 
     title: "Usage-Based Billing", 
-    description: "Pay only for what your bot consumes. Credits deducted per request with auto-recharge.",
+    description: "Pay only for what your agent consumes. Credits deducted per request with auto-recharge.",
     metric: "Pay-as-go"
   }
 ];
@@ -42,33 +42,33 @@ const valueProps = [
 const apiEndpoints = [
   {
     method: "POST",
-    path: "/bot/validate-email",
-    description: "Email validation optimized for bots",
+    path: "/agent/validate-email",
+    description: "Email validation optimized for agents",
     badge: "Core",
     credits: 1
   },
   {
     method: "POST",
-    path: "/bot/validate-email-ai",
+    path: "/agent/validate-email-ai",
     description: "AI-enhanced validation for autonomous systems",
     badge: "AI",
     credits: 1
   },
   {
     method: "GET",
-    path: "/bot/health",
+    path: "/agent/health",
     description: "System health check",
     badge: "Status",
     credits: 0
   }
 ];
 
-const codeExample = `// Bot Integration Example
-const API_KEY = process.env.BOT_API_KEY;
+const codeExample = `// Agent Integration Example
+const API_KEY = process.env.AGENT_API_KEY;
 const BASE_URL = 'https://api.xpexneural.com';
 
 async function validateEmail(email) {
-  const response = await fetch(\`\${BASE_URL}/bot/validate-email\`, {
+  const response = await fetch(\`\${BASE_URL}/agent/validate-email\`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ async function validateEmail(email) {
   return response.json();
 }
 
-// Usage in your bot
+// Usage in your agent
 const result = await validateEmail('user@example.com');
 // {
 //   email: "user@example.com",
@@ -92,7 +92,7 @@ const result = await validateEmail('user@example.com');
 // }`;
 
 const features = [
-  { icon: Bot, title: "Bot-First Design", description: "No UI dependency. Pure API consumption with predictable responses" },
+  { icon: Cpu, title: "Agent-First Design", description: "No UI dependency. Pure API consumption with predictable responses" },
   { icon: Zap, title: "High Throughput", description: "Handle millions of requests per day with horizontal scaling" },
   { icon: Lock, title: "API Key Auth", description: "Secure access via x-api-key header with rate limiting" },
   { icon: Activity, title: "Rate Limiting", description: "Tiered rate limits from 10 rps to custom enterprise levels" },
@@ -101,12 +101,12 @@ const features = [
 ];
 
 const pricingPackages = [
-  { name: "Bot Starter", credits: "50,000", price: 29, rateLimit: "10 rps", description: "For small bots and early automation", recommended: false },
-  { name: "Bot Scale", credits: "500,000", price: 199, rateLimit: "50 rps", description: "For production bots and SaaS backends", recommended: true },
+  { name: "Agent Starter", credits: "50,000", price: 29, rateLimit: "10 rps", description: "For small agents and early automation", recommended: false },
+  { name: "Agent Scale", credits: "500,000", price: 199, rateLimit: "50 rps", description: "For production agents and SaaS backends", recommended: true },
   { name: "Enterprise", credits: "Unlimited", price: "Custom", rateLimit: "Custom", description: "99.9% SLA with priority routing", recommended: false }
 ];
 
-const BotAPI = () => {
+const AgentAPI = () => {
   const [copied, setCopied] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -129,8 +129,8 @@ const BotAPI = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <Helmet>
-        <title>Bot API - Infrastructure API for Automated Systems | XPEX Neural</title>
-        <meta name="description" content="High-performance API designed exclusively for bots, agents, and automated systems. Built for scale, stability, and pay-per-use monetization." />
+        <title>Agent API - Infrastructure API for Autonomous Systems | XPEC Neural</title>
+        <meta name="description" content="High-performance API designed exclusively for agents, AI systems, and autonomous services. Built for scale, stability, and pay-per-use monetization." />
       </Helmet>
 
       {/* Header */}
@@ -139,9 +139,9 @@ const BotAPI = () => {
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Bot className="w-4 h-4 text-white" />
+                <Cpu className="w-4 h-4 text-white" />
               </div>
-              <span className="font-semibold text-lg">Bot API</span>
+              <span className="font-semibold text-lg">Agent API</span>
             </Link>
             
             <div className="flex items-center gap-3">
@@ -176,12 +176,12 @@ const BotAPI = () => {
             
             <h1 className="text-4xl md:text-6xl font-bold">
               <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-violet-500 bg-clip-text text-transparent">
-                Bot API
+                Agent API
               </span>
             </h1>
             
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">
-              Infrastructure API for Automated Systems & Bots.
+              Infrastructure API for Autonomous Agents & AI Systems.
               <span className="text-slate-300"> Built for scale, stability, and pay-per-use monetization.</span>
             </p>
 
@@ -371,11 +371,11 @@ const BotAPI = () => {
             <Link to="/docs" className="hover:text-slate-300 transition-colors">Docs</Link>
             <Link to="/status" className="hover:text-slate-300 transition-colors">Status</Link>
           </div>
-          <p className="text-sm text-slate-600">© 2025 XPEX Neural. All rights reserved.</p>
+          <p className="text-sm text-slate-600">© 2025 XPEC Neural. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
 };
 
-export default BotAPI;
+export default AgentAPI;
