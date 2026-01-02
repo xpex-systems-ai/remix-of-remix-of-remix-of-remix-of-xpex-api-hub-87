@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AgentTopologyGraph } from "./AgentTopologyGraph";
 import { AgentHealthMonitor } from "./AgentHealthMonitor";
+import { BrainConfigPanel } from "./BrainConfigPanel";
 import {
   Brain,
   Activity,
@@ -111,13 +112,14 @@ export default function BrainDashboard() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topology">Topology</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="decisions">Decision Log</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="config">Config</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -308,6 +310,10 @@ export default function BrainDashboard() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="config" className="space-y-4">
+          <BrainConfigPanel />
         </TabsContent>
       </Tabs>
     </div>
