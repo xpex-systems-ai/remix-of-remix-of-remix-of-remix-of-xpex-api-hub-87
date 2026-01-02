@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AgentTopologyGraph } from "./AgentTopologyGraph";
+import { AgentHealthMonitor } from "./AgentHealthMonitor";
 import {
   Brain,
   Activity,
@@ -22,6 +24,7 @@ import {
   XCircle,
   Cpu,
   BarChart3,
+  Network,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -108,8 +111,10 @@ export default function BrainDashboard() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="topology">Topology</TabsTrigger>
+          <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="decisions">Decision Log</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
@@ -193,6 +198,21 @@ export default function BrainDashboard() {
               </ScrollArea>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="topology" className="space-y-4">
+          <AgentTopologyGraph 
+            agents={agents} 
+            decisions={decisions} 
+            onRefresh={refresh}
+          />
+        </TabsContent>
+
+        <TabsContent value="health" className="space-y-4">
+          <AgentHealthMonitor 
+            agents={agents} 
+            onAgentUpdate={refresh}
+          />
         </TabsContent>
 
         <TabsContent value="agents" className="space-y-4">
