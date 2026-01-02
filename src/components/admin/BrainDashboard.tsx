@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AgentTopologyGraph } from "./AgentTopologyGraph";
 import { AgentHealthMonitor } from "./AgentHealthMonitor";
 import { BrainConfigPanel } from "./BrainConfigPanel";
+import { CircuitBreakerIndicator } from "./CircuitBreakerIndicator";
 import {
   Brain,
   Activity,
@@ -222,6 +223,7 @@ export default function BrainDashboard() {
         </TabsContent>
 
         <TabsContent value="health" className="space-y-4">
+          <CircuitBreakerIndicator agents={agents} />
           <AgentHealthMonitor 
             agents={agents} 
             onAgentUpdate={refresh}
