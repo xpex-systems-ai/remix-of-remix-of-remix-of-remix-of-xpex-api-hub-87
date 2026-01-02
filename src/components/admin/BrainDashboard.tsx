@@ -30,7 +30,7 @@ import {
 import { format } from "date-fns";
 
 export default function BrainDashboard() {
-  const { health, agents, decisions, stats, loading, error, refresh } = useBrain();
+  const { health, agents, decisions, stats, loading, error, refresh, isLive, lastUpdate } = useBrain();
   const { balance } = useCredits();
   const credits = balance?.credits ?? 0;
   const [activeTab, setActiveTab] = useState("overview");
@@ -67,9 +67,20 @@ export default function BrainDashboard() {
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Brain className="h-7 w-7 text-primary" />
             XPEX Brain Layer
+            {isLive && (
+              <Badge variant="outline" className="ml-2 gap-1 text-xs animate-pulse">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                Live
+              </Badge>
+            )}
           </h2>
           <p className="text-muted-foreground">
             Strategic orchestration and intelligent decision making
+            {lastUpdate && (
+              <span className="ml-2 text-xs">
+                • Last update: {lastUpdate.type} {lastUpdate.event.toLowerCase()} at {lastUpdate.timestamp.toLocaleTimeString()}
+              </span>
+            )}
           </p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
