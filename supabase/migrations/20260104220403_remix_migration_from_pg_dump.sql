@@ -1,10 +1,10 @@
-CREATE EXTENSION IF NOT EXISTS "pg_cron" WITH SCHEMA "pg_catalog";
-CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
-CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "pg_cron";
+CREATE EXTENSION IF NOT EXISTS "pg_graphql";
+CREATE EXTENSION IF NOT EXISTS "pg_net";
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
-CREATE EXTENSION IF NOT EXISTS "plpgsql" WITH SCHEMA "pg_catalog";
-CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
+CREATE EXTENSION IF NOT EXISTS "plpgsql";
+CREATE EXTENSION IF NOT EXISTS "supabase_vault";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 BEGIN;
 
@@ -43,6 +43,27 @@ CREATE TYPE public.app_role AS ENUM (
     'moderator',
     'user'
 );
+
+
+--
+-- Name: add_credits(uuid, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.add_credits(p_user_id uuid, p_amount integer) RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  new_credits integer;
+BEGIN
+  UPDATE profiles
+  SET credits = credits + p_amount, updated_at = now()
+  WHERE user_id = p_user_id
+  RETURNING credits INTO new_credits;
+  
+  RETURN COALESCE(new_credits, -1);
+END;
+$$;
 
 
 SET default_table_access_method = heap;
@@ -183,6 +204,45 @@ $$;
 
 
 --
+-- Name: deduct_credits(uuid, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.deduct_credits(p_user_id uuid, p_amount integer DEFAULT 1) RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  current_credits integer;
+  new_credits integer;
+BEGIN
+  -- Get current credits with row-level lock
+  SELECT credits INTO current_credits
+  FROM profiles
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+  
+  IF current_credits IS NULL THEN
+    RETURN -1; -- User not found
+  END IF;
+  
+  IF current_credits < p_amount THEN
+    RETURN -2; -- Insufficient credits
+  END IF;
+  
+  -- Calculate new credits
+  new_credits := GREATEST(current_credits - p_amount, 0);
+  
+  -- Update credits
+  UPDATE profiles
+  SET credits = new_credits, updated_at = now()
+  WHERE user_id = p_user_id;
+  
+  RETURN new_credits;
+END;
+$$;
+
+
+--
 -- Name: generate_referral_code(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -227,6 +287,46 @@ $$;
 
 
 --
+-- Name: grant_signup_bonus(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.grant_signup_bonus() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  bonus_credits INTEGER := 10;
+  current_credits INTEGER;
+BEGIN
+  -- Get current credits (should be 0 for new profiles)
+  current_credits := COALESCE(NEW.credits, 0);
+  
+  -- Update the profile with bonus credits
+  NEW.credits := current_credits + bonus_credits;
+  
+  -- Record the transaction
+  INSERT INTO public.credit_transactions (
+    user_id,
+    amount,
+    type,
+    description,
+    balance_after,
+    metadata
+  ) VALUES (
+    NEW.user_id,
+    bonus_credits,
+    'subscription',
+    'Welcome bonus - 10 free credits',
+    NEW.credits,
+    '{"source": "signup_bonus", "bonus_type": "welcome"}'::jsonb
+  );
+  
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: handle_new_user(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -234,12 +334,20 @@ CREATE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
+DECLARE
+  signup_bonus INTEGER := 10;
 BEGIN
-  INSERT INTO public.profiles (user_id, email, full_name)
-  VALUES (new.id, new.email, new.raw_user_meta_data ->> 'full_name');
+  -- Create profile with signup bonus credits
+  INSERT INTO public.profiles (user_id, email, full_name, credits)
+  VALUES (new.id, new.email, new.raw_user_meta_data ->> 'full_name', signup_bonus);
   
+  -- Assign default user role
   INSERT INTO public.user_roles (user_id, role)
   VALUES (new.id, 'user');
+  
+  -- Record the signup bonus transaction
+  INSERT INTO public.credit_transactions (user_id, amount, type, description, balance_after)
+  VALUES (new.id, signup_bonus, 'signup_bonus', 'Welcome bonus - 10 free credits', signup_bonus);
   
   RETURN new;
 END;
@@ -281,6 +389,49 @@ $$;
 
 
 --
+-- Name: rotate_api_key(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.rotate_api_key(p_key_id uuid, p_user_id uuid) RETURNS TABLE(new_key_id uuid, new_key text, expires_at timestamp with time zone)
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_new_key text;
+  v_new_key_id uuid;
+  v_old_key_name text;
+  v_expires_at timestamp with time zone;
+BEGIN
+  -- Get old key info
+  SELECT name INTO v_old_key_name
+  FROM api_keys
+  WHERE id = p_key_id AND user_id = p_user_id;
+  
+  IF v_old_key_name IS NULL THEN
+    RAISE EXCEPTION 'API key not found or unauthorized';
+  END IF;
+  
+  -- Generate new key
+  v_new_key := 'gm_' || encode(gen_random_bytes(32), 'hex');
+  v_expires_at := now() + interval '90 days';
+  
+  -- Deactivate old key
+  UPDATE api_keys
+  SET status = 'rotated'
+  WHERE id = p_key_id;
+  
+  -- Create new key with reference to old one
+  INSERT INTO api_keys (user_id, name, key, status, expires_at, rotated_from, environment, is_sandbox)
+  SELECT user_id, name || ' (rotated)', v_new_key, 'active', v_expires_at, p_key_id, environment, is_sandbox
+  FROM api_keys WHERE id = p_key_id
+  RETURNING id INTO v_new_key_id;
+  
+  RETURN QUERY SELECT v_new_key_id, v_new_key, v_expires_at;
+END;
+$$;
+
+
+--
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -291,6 +442,31 @@ CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: validate_api_key_extended(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.validate_api_key_extended(p_key text) RETURNS TABLE(valid boolean, user_id uuid, key_id uuid, credits integer, tier text, is_sandbox boolean, is_expired boolean)
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    (ak.status = 'active' AND (ak.expires_at IS NULL OR ak.expires_at > now())) as valid,
+    p.user_id,
+    ak.id as key_id,
+    p.credits,
+    COALESCE(p.subscription_tier, 'free') as tier,
+    COALESCE(ak.is_sandbox, false) as is_sandbox,
+    (ak.expires_at IS NOT NULL AND ak.expires_at <= now()) as is_expired
+  FROM api_keys ak
+  JOIN profiles p ON ak.user_id = p.user_id
+  WHERE ak.key = p_key;
 END;
 $$;
 
@@ -309,6 +485,32 @@ CREATE TABLE public.achievements (
     badge_color text DEFAULT 'bronze'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: agent_registry; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agent_registry (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    endpoint text NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    capabilities text[] DEFAULT '{}'::text[],
+    performance_score numeric(5,4) DEFAULT 0.95,
+    avg_latency_ms integer DEFAULT 100,
+    cost_per_call numeric(10,6) DEFAULT 1.0,
+    success_rate numeric(5,4) DEFAULT 0.99,
+    current_load integer DEFAULT 0,
+    max_load integer DEFAULT 1000,
+    metadata jsonb DEFAULT '{}'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT agent_registry_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'degraded'::text, 'maintenance'::text])))
+);
+
+ALTER TABLE ONLY public.agent_registry REPLICA IDENTITY FULL;
 
 
 --
@@ -340,6 +542,12 @@ CREATE TABLE public.api_keys (
     calls_count integer DEFAULT 0 NOT NULL,
     last_used_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_sandbox boolean DEFAULT false,
+    expires_at timestamp with time zone,
+    rotated_from uuid,
+    rotation_scheduled_at timestamp with time zone,
+    environment text DEFAULT 'production'::text,
+    CONSTRAINT api_keys_environment_check CHECK ((environment = ANY (ARRAY['sandbox'::text, 'production'::text]))),
     CONSTRAINT api_keys_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'revoked'::text])))
 );
 
@@ -362,6 +570,86 @@ CREATE TABLE public.audit_logs (
 
 
 --
+-- Name: auto_recharge_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.auto_recharge_settings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    threshold_credits integer DEFAULT 100 NOT NULL,
+    recharge_amount integer DEFAULT 1000 NOT NULL,
+    recharge_package text DEFAULT 'starter'::text NOT NULL,
+    stripe_payment_method_id text,
+    last_recharge_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: brain_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.brain_config (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    config_key text NOT NULL,
+    config_value jsonb NOT NULL,
+    description text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: brain_decisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.brain_decisions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid,
+    decision_type text NOT NULL,
+    inputs jsonb DEFAULT '{}'::jsonb NOT NULL,
+    decision jsonb DEFAULT '{}'::jsonb NOT NULL,
+    confidence_score numeric(5,4),
+    execution_result jsonb,
+    latency_ms integer,
+    risk_assessment jsonb,
+    agent_selected text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT brain_decisions_confidence_score_check CHECK (((confidence_score >= (0)::numeric) AND (confidence_score <= (1)::numeric)))
+);
+
+ALTER TABLE ONLY public.brain_decisions REPLICA IDENTITY FULL;
+
+
+--
+-- Name: bulk_validation_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bulk_validation_jobs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    file_name text NOT NULL,
+    total_emails integer DEFAULT 0 NOT NULL,
+    processed_emails integer DEFAULT 0 NOT NULL,
+    valid_emails integer DEFAULT 0 NOT NULL,
+    invalid_emails integer DEFAULT 0 NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    results jsonb,
+    error_message text,
+    credits_used integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    completed_at timestamp with time zone,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    scheduled_at timestamp with time zone,
+    schedule_status text DEFAULT 'immediate'::text,
+    pending_emails text[],
+    CONSTRAINT bulk_validation_jobs_schedule_status_check CHECK ((schedule_status = ANY (ARRAY['immediate'::text, 'scheduled'::text, 'processing'::text])))
+);
+
+
+--
 -- Name: configuration_backups; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -373,6 +661,23 @@ CREATE TABLE public.configuration_backups (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     expires_at timestamp with time zone DEFAULT (now() + '30 days'::interval) NOT NULL,
     CONSTRAINT configuration_backups_backup_type_check CHECK ((backup_type = ANY (ARRAY['webhooks'::text, 'notification_preferences'::text, 'full'::text])))
+);
+
+
+--
+-- Name: credit_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.credit_transactions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    amount integer NOT NULL,
+    type text NOT NULL,
+    description text,
+    balance_after integer NOT NULL,
+    metadata jsonb DEFAULT '{}'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT credit_transactions_type_check CHECK ((type = ANY (ARRAY['purchase'::text, 'deduction'::text, 'subscription'::text, 'referral'::text, 'refund'::text, 'adjustment'::text])))
 );
 
 
@@ -587,6 +892,22 @@ ALTER TABLE ONLY public.achievements
 
 
 --
+-- Name: agent_registry agent_registry_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agent_registry
+    ADD CONSTRAINT agent_registry_name_key UNIQUE (name);
+
+
+--
+-- Name: agent_registry agent_registry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agent_registry
+    ADD CONSTRAINT agent_registry_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: alert_thresholds alert_thresholds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -627,11 +948,67 @@ ALTER TABLE ONLY public.audit_logs
 
 
 --
+-- Name: auto_recharge_settings auto_recharge_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.auto_recharge_settings
+    ADD CONSTRAINT auto_recharge_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: auto_recharge_settings auto_recharge_settings_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.auto_recharge_settings
+    ADD CONSTRAINT auto_recharge_settings_user_id_key UNIQUE (user_id);
+
+
+--
+-- Name: brain_config brain_config_config_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brain_config
+    ADD CONSTRAINT brain_config_config_key_key UNIQUE (config_key);
+
+
+--
+-- Name: brain_config brain_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brain_config
+    ADD CONSTRAINT brain_config_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: brain_decisions brain_decisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brain_decisions
+    ADD CONSTRAINT brain_decisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bulk_validation_jobs bulk_validation_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bulk_validation_jobs
+    ADD CONSTRAINT bulk_validation_jobs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: configuration_backups configuration_backups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.configuration_backups
     ADD CONSTRAINT configuration_backups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: credit_transactions credit_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.credit_transactions
+    ADD CONSTRAINT credit_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -795,6 +1172,27 @@ ALTER TABLE ONLY public.webhooks
 
 
 --
+-- Name: idx_agent_registry_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_agent_registry_status ON public.agent_registry USING btree (status);
+
+
+--
+-- Name: idx_api_keys_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_api_keys_expires_at ON public.api_keys USING btree (expires_at) WHERE (expires_at IS NOT NULL);
+
+
+--
+-- Name: idx_api_keys_sandbox; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_api_keys_sandbox ON public.api_keys USING btree (is_sandbox) WHERE (is_sandbox = true);
+
+
+--
 -- Name: idx_audit_logs_action; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -816,6 +1214,34 @@ CREATE INDEX idx_audit_logs_user_id ON public.audit_logs USING btree (user_id);
 
 
 --
+-- Name: idx_brain_decisions_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_brain_decisions_created_at ON public.brain_decisions USING btree (created_at DESC);
+
+
+--
+-- Name: idx_brain_decisions_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_brain_decisions_type ON public.brain_decisions USING btree (decision_type);
+
+
+--
+-- Name: idx_brain_decisions_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_brain_decisions_user_id ON public.brain_decisions USING btree (user_id);
+
+
+--
+-- Name: idx_bulk_validation_scheduled; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bulk_validation_scheduled ON public.bulk_validation_jobs USING btree (scheduled_at, status) WHERE (scheduled_at IS NOT NULL);
+
+
+--
 -- Name: idx_configuration_backups_expires; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -827,6 +1253,20 @@ CREATE INDEX idx_configuration_backups_expires ON public.configuration_backups U
 --
 
 CREATE INDEX idx_configuration_backups_user_type ON public.configuration_backups USING btree (user_id, backup_type);
+
+
+--
+-- Name: idx_credit_transactions_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_credit_transactions_created_at ON public.credit_transactions USING btree (created_at DESC);
+
+
+--
+-- Name: idx_credit_transactions_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_credit_transactions_user_id ON public.credit_transactions USING btree (user_id);
 
 
 --
@@ -851,10 +1291,45 @@ CREATE INDEX idx_webhook_logs_webhook_id ON public.webhook_logs USING btree (web
 
 
 --
+-- Name: profiles on_profile_created_grant_bonus; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER on_profile_created_grant_bonus BEFORE INSERT ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.grant_signup_bonus();
+
+
+--
 -- Name: profiles trigger_generate_referral_code; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER trigger_generate_referral_code BEFORE INSERT OR UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.generate_referral_code();
+
+
+--
+-- Name: agent_registry update_agent_registry_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_agent_registry_updated_at BEFORE UPDATE ON public.agent_registry FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: auto_recharge_settings update_auto_recharge_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_auto_recharge_updated_at BEFORE UPDATE ON public.auto_recharge_settings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: brain_config update_brain_config_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_brain_config_updated_at BEFORE UPDATE ON public.brain_config FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: bulk_validation_jobs update_bulk_validation_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_bulk_validation_updated_at BEFORE UPDATE ON public.bulk_validation_jobs FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -886,11 +1361,27 @@ CREATE TRIGGER update_webhooks_updated_at BEFORE UPDATE ON public.webhooks FOR E
 
 
 --
+-- Name: api_keys api_keys_rotated_from_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.api_keys
+    ADD CONSTRAINT api_keys_rotated_from_fkey FOREIGN KEY (rotated_from) REFERENCES public.api_keys(id);
+
+
+--
 -- Name: api_keys api_keys_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_keys
     ADD CONSTRAINT api_keys_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: brain_decisions brain_decisions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brain_decisions
+    ADD CONSTRAINT brain_decisions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
@@ -982,10 +1473,66 @@ ALTER TABLE ONLY public.webhook_logs
 
 
 --
--- Name: achievements Achievements are viewable by everyone; Type: POLICY; Schema: public; Owner: -
+-- Name: achievements Admin delete achievements; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Achievements are viewable by everyone" ON public.achievements FOR SELECT USING (true);
+CREATE POLICY "Admin delete achievements" ON public.achievements FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: agent_registry Admin delete agents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin delete agents" ON public.agent_registry FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: brain_config Admin delete brain config; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin delete brain config" ON public.brain_config FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: achievements Admin insert achievements; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin insert achievements" ON public.achievements FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: agent_registry Admin insert agents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin insert agents" ON public.agent_registry FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: brain_config Admin insert brain config; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin insert brain config" ON public.brain_config FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: achievements Admin update achievements; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin update achievements" ON public.achievements FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: agent_registry Admin update agents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin update agents" ON public.agent_registry FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: brain_config Admin update brain config; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admin update brain config" ON public.brain_config FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
 
 
 --
@@ -1016,6 +1563,13 @@ CREATE POLICY "Admins can update incidents" ON public.system_incidents FOR UPDAT
 
 
 --
+-- Name: brain_decisions Admins can view all decisions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admins can view all decisions" ON public.brain_decisions FOR SELECT USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
 -- Name: newsletter_subscribers Anyone can subscribe to newsletter; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1030,10 +1584,38 @@ CREATE POLICY "Anyone can view system incidents" ON public.system_incidents FOR 
 
 
 --
--- Name: newsletter_subscribers Public can check subscription status; Type: POLICY; Schema: public; Owner: -
+-- Name: agent_registry Auth users can view agents; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Public can check subscription status" ON public.newsletter_subscribers FOR SELECT USING (true);
+CREATE POLICY "Auth users can view agents" ON public.agent_registry FOR SELECT TO authenticated USING (true);
+
+
+--
+-- Name: achievements Auth users view achievements; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Auth users view achievements" ON public.achievements FOR SELECT TO authenticated USING (true);
+
+
+--
+-- Name: brain_config Auth view brain config; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Auth view brain config" ON public.brain_config FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
+-- Name: newsletter_subscribers Check subscription by email only; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Check subscription by email only" ON public.newsletter_subscribers FOR SELECT USING (true);
+
+
+--
+-- Name: brain_decisions System can insert decisions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "System can insert decisions" ON public.brain_decisions FOR INSERT WITH CHECK (true);
 
 
 --
@@ -1086,6 +1668,20 @@ CREATE POLICY "Users can delete their own API keys" ON public.api_keys FOR DELET
 
 
 --
+-- Name: alert_thresholds Users can delete their own alert thresholds; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can delete their own alert thresholds" ON public.alert_thresholds FOR DELETE TO authenticated USING ((auth.uid() = user_id));
+
+
+--
+-- Name: auto_recharge_settings Users can delete their own auto-recharge settings; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can delete their own auto-recharge settings" ON public.auto_recharge_settings FOR DELETE TO authenticated USING ((auth.uid() = user_id));
+
+
+--
 -- Name: configuration_backups Users can delete their own backups; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1093,10 +1689,24 @@ CREATE POLICY "Users can delete their own backups" ON public.configuration_backu
 
 
 --
+-- Name: bulk_validation_jobs Users can delete their own bulk jobs; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can delete their own bulk jobs" ON public.bulk_validation_jobs FOR DELETE TO authenticated USING ((auth.uid() = user_id));
+
+
+--
 -- Name: email_templates Users can delete their own email templates; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own email templates" ON public.email_templates FOR DELETE USING ((auth.uid() = user_id));
+
+
+--
+-- Name: notification_preferences Users can delete their own notification preferences; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can delete their own notification preferences" ON public.notification_preferences FOR DELETE TO authenticated USING ((auth.uid() = user_id));
 
 
 --
@@ -1128,10 +1738,24 @@ CREATE POLICY "Users can insert their own audit logs" ON public.audit_logs FOR I
 
 
 --
+-- Name: auto_recharge_settings Users can insert their own auto-recharge settings; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can insert their own auto-recharge settings" ON public.auto_recharge_settings FOR INSERT WITH CHECK ((auth.uid() = user_id));
+
+
+--
 -- Name: configuration_backups Users can insert their own backups; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own backups" ON public.configuration_backups FOR INSERT WITH CHECK ((auth.uid() = user_id));
+
+
+--
+-- Name: bulk_validation_jobs Users can insert their own bulk jobs; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can insert their own bulk jobs" ON public.bulk_validation_jobs FOR INSERT WITH CHECK ((auth.uid() = user_id));
 
 
 --
@@ -1181,6 +1805,20 @@ CREATE POLICY "Users can update their own API keys" ON public.api_keys FOR UPDAT
 --
 
 CREATE POLICY "Users can update their own alert thresholds" ON public.alert_thresholds FOR UPDATE USING ((auth.uid() = user_id));
+
+
+--
+-- Name: auto_recharge_settings Users can update their own auto-recharge settings; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can update their own auto-recharge settings" ON public.auto_recharge_settings FOR UPDATE USING ((auth.uid() = user_id));
+
+
+--
+-- Name: bulk_validation_jobs Users can update their own bulk jobs; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can update their own bulk jobs" ON public.bulk_validation_jobs FOR UPDATE USING ((auth.uid() = user_id));
 
 
 --
@@ -1263,10 +1901,31 @@ CREATE POLICY "Users can view their own audit logs" ON public.audit_logs FOR SEL
 
 
 --
+-- Name: auto_recharge_settings Users can view their own auto-recharge settings; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view their own auto-recharge settings" ON public.auto_recharge_settings FOR SELECT USING ((auth.uid() = user_id));
+
+
+--
 -- Name: configuration_backups Users can view their own backups; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own backups" ON public.configuration_backups FOR SELECT USING ((auth.uid() = user_id));
+
+
+--
+-- Name: bulk_validation_jobs Users can view their own bulk jobs; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view their own bulk jobs" ON public.bulk_validation_jobs FOR SELECT USING ((auth.uid() = user_id));
+
+
+--
+-- Name: brain_decisions Users can view their own decisions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view their own decisions" ON public.brain_decisions FOR SELECT USING ((auth.uid() = user_id));
 
 
 --
@@ -1321,6 +1980,13 @@ CREATE POLICY "Users can view their own subscriptions" ON public.subscriptions F
 
 
 --
+-- Name: credit_transactions Users can view their own transactions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view their own transactions" ON public.credit_transactions FOR SELECT USING ((auth.uid() = user_id));
+
+
+--
 -- Name: usage_logs Users can view their own usage logs; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1350,6 +2016,12 @@ CREATE POLICY "Users can view their webhook logs" ON public.webhook_logs FOR SEL
 ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: agent_registry; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agent_registry ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: alert_thresholds; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1368,10 +2040,40 @@ ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: auto_recharge_settings; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.auto_recharge_settings ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: brain_config; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.brain_config ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: brain_decisions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.brain_decisions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: bulk_validation_jobs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.bulk_validation_jobs ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: configuration_backups; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.configuration_backups ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: credit_transactions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.credit_transactions ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: email_templates; Type: ROW SECURITY; Schema: public; Owner: -
