@@ -8,9 +8,9 @@
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 [![Powered by RustChain](https://img.shields.io/badge/Powered%20by-RustChain-orange)](https://rustchain.org)
 
-**Enterprise-grade email validation API with AI-powered fraud detection**
+**Email validation and API-marketplace lineage under XPeX enterprise admission**
 
-[Live Demo](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) • [API Reference](./API_REFERENCE.md) • [Contributing](./CONTRIBUTING.md)
+[API Reference](./API_REFERENCE.md) • [Architecture](./ARCHITECTURE.md) • [Security](./SECURITY.md) • [Contributing](./CONTRIBUTING.md)
 
 </div>
 
@@ -26,7 +26,7 @@ XPEX Neural's GoldMail platform provides real-time email validation with advance
 - **🤖 AI-Powered Analysis** - Neural network fraud detection and risk scoring
 - **📦 Bulk Processing** - Validate up to 10,000 emails per batch
 - **📊 Analytics Dashboard** - Real-time usage metrics and insights
-- **🔐 Enterprise Security** - TLS 1.3, RBAC, audit logging, GDPR compliant
+- **🔐 Security controls** - authentication, authorization and audit-oriented components are present in source; production assurance is tracked separately
 - **💳 Flexible Pricing** - Pay-as-you-go credits with volume discounts
 
 ---
@@ -198,13 +198,24 @@ New users receive **10 free credits** on signup.
 
 ---
 
-## 🔐 Security
+## 🔐 Security & assurance
 
-- **Encryption**: TLS 1.3 for all API communications
-- **Authentication**: API key + JWT-based user sessions
-- **Authorization**: Row Level Security (RLS) on all tables
-- **Audit**: Comprehensive logging of all API calls
-- **Compliance**: GDPR tooling, SOC2 Type II in progress
+This repository is being admitted into the XPeX Evidence First control plane.
+
+Current source evidence shows security-oriented implementation including API-key/JWT flows, Supabase RLS-oriented architecture, Stripe webhook handling and audit-oriented functions. These implementation details are **not** treated as proof of production-wide enforcement by themselves.
+
+Before public enterprise promotion, XPeX requires runtime evidence for:
+- access-control and RLS enforcement;
+- secret storage and rotation;
+- Stripe webhook signature validation;
+- rate/abuse controls;
+- dependency and supply-chain posture;
+- rollback/containment;
+- production data boundaries.
+
+No SOC 2, ISO, government/defense or other external certification is claimed by this repository.
+
+See [SECURITY.md](./SECURITY.md).
 
 ---
 
