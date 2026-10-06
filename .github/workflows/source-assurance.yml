@@ -17,14 +17,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: "20"
-          cache: npm
-      - name: Install
-        run: npm ci
+          bun-version: latest
+      - name: Install from Bun lockfile
+        run: bun install --frozen-lockfile
       - name: Build
-        run: npm run build
+        run: bun run build
       - name: Secret pattern scan
         run: python scripts/secret-pattern-scan.py
